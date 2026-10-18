@@ -37,7 +37,7 @@
 | Language               | TypeScript                                                                          | 6.0.x until typescript-eslint and Storybook's docgen support TypeScript 7 (the native port)                                                                                                                                                              |
 | Unit test              | Vitest + React Testing Library                                                      | `jsdom` environment, `@testing-library/jest-dom` matchers                                                                                                                                                                                                |
 | Lint / Format          | ESLint (flat config) + Prettier                                                     | ESLint 10. `eslint-config-prettier` to avoid conflicts. `eslint-plugin-jsx-a11y` is not used (it supports ESLint 9 at most); accessibility is covered by the a11y addon and role-based tests                                                             |
-| Library build          | tsup (esbuild based)                                                                | Emits ESM + CJS + `.d.ts`                                                                                                                                                                                                                                |
+| Library build          | tsdown (Rolldown based)                                                             | Emits ESM + CJS + `.d.ts`. Replaced tsup, which is no longer maintained (Decision 2)                                                                                                                                                                     |
 | Container              | Dockerfile + docker compose                                                         | Local development assumes Docker                                                                                                                                                                                                                         |
 | Task runner            | Makefile                                                                            | Single entry point for every command                                                                                                                                                                                                                     |
 | Deploy                 | Cloudflare Pages (Workers Static Assets only if Pages cannot meet the requirements) | Structured so that other clouds can be swapped in. See §4                                                                                                                                                                                                |
@@ -54,10 +54,11 @@ explicitly (e.g. `24`), and use the same major in `.nvmrc`, `engines`, the Docke
 1. **Drop Jest and use Vitest only.**
    The draft listed both Jest and Vitest, which overlap. Vitest shares configuration with Storybook
    (Vite builder) and works with React Testing Library as is.
-2. **Use tsup instead of calling esbuild directly.**
+2. **Use a library bundler (tsdown) instead of calling esbuild directly.**
    A library build needs type declarations, dual ESM/CJS output and `exports` wiring; raw esbuild
-   would require a lot of custom scripting. tsup is built on esbuild, so the intent of the draft is
-   preserved.
+   would require a lot of custom scripting. The draft's tsup was approved first, but tsup 9's README
+   states that it is no longer maintained and points to tsdown, its successor with a tsup-like
+   configuration; the owner approved tsdown in Phase 4 (pinned exactly while it is 0.x).
 3. **Adopt Changesets for versioning.**
    Instead of managing tags and Releases by hand, each PR records its change type
    (major/minor/patch), which drives an automated release PR, tag, GitHub Release and npm publish.
@@ -98,11 +99,14 @@ explicitly (e.g. `24`), and use the same major in `.nvmrc`, `engines`, the Docke
 ├── scripts/
 │   ├── build-storybook-all.ts  # builds every productId into dist/storybook/{productId}/ + portal
 │   ├── lib/                    # tested helpers for the scripts (clean URLs, portal rendering)
+│   ├── check-package.ts        # checks the built package (exports, 'use client', styles.css)
 │   ├── secrets-pull-aws.sh
-│   └── new-product.sh          # scaffolds a productId
+│   └── new-product.ts          # scaffolds a productId and its package export
 ├── src/
 │   ├── styles/
-│   │   └── index.css           # Tailwind entry + @theme design tokens
+│   │   ├── theme.css           # @theme design tokens, shipped as theme.css
+│   │   ├── index.css           # Tailwind entry for Storybook
+│   │   └── package.css         # Tailwind entry for the shipped styles.css
 │   ├── lib/
 │   │   └── cn.ts               # clsx + tailwind-merge utility
 │   ├── shared/                 # components and tokens shared by every product
@@ -137,7 +141,7 @@ explicitly (e.g. `24`), and use the same major in `.nvmrc`, `engines`, the Docke
 ├── Makefile
 ├── package.json
 ├── tsconfig.json
-├── tsup.config.ts
+├── tsdown.config.ts
 ├── vitest.config.ts
 ├── eslint.config.js
 ├── .prettierrc
@@ -153,7 +157,7 @@ explicitly (e.g. `24`), and use the same major in `.nvmrc`, `engines`, the Docke
 - Both `shared` and `products/{productId}` use the same layout:
   `components/{category}/{Component}/`. `{category}` is a lower-case kebab-case directory and
   matches the first segment of the story title.
-- `scripts/new-product.sh <productId>` scaffolds a new product directory (see §9 for the export
+- `scripts/new-product.ts <productId>` scaffolds a new product directory (see §9 for the export
   wiring it must also do).
 - Dependency direction: `products/*` may import from `shared`; `shared` must not import from
   `products`; a product must not import from another product. Enforce this with an ESLint rule
@@ -277,7 +281,7 @@ Requirements Pages must meet:
 | `make install PKG=xxx`                         | `pnpm add` inside the container                                    |
 | `make lint` / `make format` / `make typecheck` | Static analysis and formatting                                     |
 | `make test` / `make test-watch`                | Vitest                                                             |
-| `make build`                                   | Package build (tsup + CSS)                                         |
+| `make build`                                   | Package build (tsdown + CSS)                                       |
 | `make build-storybook`                         | Storybook build for every productId                                |
 | `make ci`                                      | Run the same checks as CI locally                                  |
 | `make new-product PRODUCT_ID=xxx`              | Scaffold a productId                                               |
@@ -371,8 +375,10 @@ Repositories created with "Use this template" and forks inherit the workflows bu
   - `su3-ui-component-catalog-template/theme.css` -> design tokens for consumers that run Tailwind
     (§10)
 - Product entries are wired automatically:
-  - `tsup.config.ts` derives its entries by globbing `src/products/*/index.ts`.
-  - `scripts/new-product.sh` adds the `./{productId}` entry to `exports`.
+  - `tsdown.config.ts` derives its entries from the directories in `src/products` (one
+    `dist/products/{productId}` entry each).
+  - `scripts/new-product.ts` (`make new-product`) creates the product and writes the
+    `./{productId}` entry to `exports`.
   - `make ci` runs a check that every `src/products/*` directory has a matching `exports` entry,
     so a manually added product cannot be left unexported.
 - `react` and `react-dom` are `peerDependencies`. `tailwindcss` is an optional peer, because
@@ -395,8 +401,9 @@ Repositories created with "Use this template" and forks inherit the workflows bu
 
 ### Setup
 
-- Tailwind CSS v4 with CSS-first configuration (`@import` + `@theme` in `src/styles/index.css`). Do
-  not create `tailwind.config.js`.
+- Tailwind CSS v4 with CSS-first configuration: `@theme` tokens in `src/styles/theme.css`, imported
+  by the Tailwind entries `src/styles/index.css` (Storybook) and `src/styles/package.css`
+  (`styles.css`). Do not create `tailwind.config.js`.
 - Storybook loads Tailwind through the `@tailwindcss/vite` plugin, and `.storybook/preview.ts`
   imports `src/styles/index.css`.
 - Design tokens (color, spacing, radius, font, etc.) are CSS variables in `@theme`; every component
@@ -415,8 +422,9 @@ Repositories created with "Use this template" and forks inherit the workflows bu
     inside `@theme`.
   - Forks are encouraged to change it to an organization abbreviation (e.g. `acme`); README
     explains how.
-  - The prefix is changed from a single constant shared by `src/styles/index.css`, the
-    `tailwind-merge` configuration (`extendTailwindMerge({ prefix })`) and the consumer snippet in
+  - The prefix is changed from a single constant shared by the stylesheets in `src/styles` (the
+    `prefix(...)` imports and the `--uic-*` dark overrides; `src/styles/prefix.test.ts` checks
+    them), the `tailwind-merge` configuration (`extendTailwindMerge({ prefix })`) and the consumer snippet in
     README.
   - Check the allowed characters for a Tailwind v4 prefix in the official documentation.
 
@@ -440,7 +448,8 @@ never resets the consumer's page.
 ### Distribution (two consumer patterns)
 
 1. **Prebuilt CSS (projects without Tailwind)**
-   - Generate `dist/styles.css` with the Tailwind CLI (or via Vite) and expose it as
+   - Generate `dist/styles.css` with the Tailwind CLI from `src/styles/package.css`, which scans
+     only the built JavaScript (no stories or tests), and expose it as
      `import "su3-ui-component-catalog-template/styles.css"`.
 2. **Built by the consumer's Tailwind (projects that already use Tailwind)**
    - Distribute `dist/theme.css` (the `@theme` tokens).
@@ -452,14 +461,19 @@ never resets the consumer's page.
      /* ui-catalog.css (separate from the consumer's own Tailwind entry) */
      @layer theme, utilities;
      @import 'tailwindcss/theme.css' layer(theme) prefix(uic);
-     @import 'tailwindcss/utilities.css' layer(utilities) prefix(uic);
+     @import 'tailwindcss/utilities.css' layer(utilities) prefix(uic) source(none);
      @import 'su3-ui-component-catalog-template/theme.css';
      @source '../node_modules/su3-ui-component-catalog-template/dist';
      ```
    - Tailwind's documentation also shows importing `theme.css` / `utilities.css` twice in one file,
-     with and without a prefix. Phase 4 includes a proof of concept that confirms which form works
-     with the consumer's build (Vite and Next.js) and that the classes do not collide; README
-     documents the confirmed form.
+     with and without a prefix. **The Phase 4 proof of concept (Vite 8 and Next.js 16 with
+     Tailwind 4.3) confirmed the separate entry above and ruled out the single file**: in one
+     compile the library's `--color-*: initial` also removes the consumer's palette (e.g.
+     `bg-red-500` is no longer generated). Details:
+     `docs/2026-10-18_03_phase4-package-build/design.md`.
+
+- The JavaScript entries start with `'use client'`, so Next.js App Router server components can
+  import the components directly.
 
 - README_JA / README document both patterns with code examples.
 
@@ -548,7 +562,8 @@ Starts with a link to `[日本語はこちら](./README_JA.md)`. Sections:
    components
 2. Docker / compose / Makefile
 3. Per-productId builds, portal, URL rewrite (nginx and Cloudflare `_redirects`)
-4. Package build (tsup + CSS output), exports, and the consumer-side Tailwind PoC (§10)
+4. Package build (tsdown + CSS output), exports, `make new-product`, and the consumer-side Tailwind
+   PoC (§10)
 5. Playwright VRT (Docker, baseline creation)
 6. GitHub Actions (CI -> VRT -> deploy -> release, with the template/fork guards)
 7. Secrets scripts
@@ -616,3 +631,9 @@ and explain the reasoning in the PR description.
   - Unified the Makefile variable to `PRODUCT_ID`; restricted `ci.yml` push triggers to
     `main` / `develop`; added `sideEffects` and automatic product export wiring.
   - Per-task docs (`docs/{yyyy-mm-dd}_{NN}_{overview}/`) are written in English.
+- **2026-10-18 Phases 3 and 4**:
+  - Library build switched from tsup to tsdown, because tsup is no longer maintained (§2
+    Decision 2; approved by the owner).
+  - `scripts/build-storybook-all.ts` and `scripts/new-product.ts` are TypeScript run by Node.js
+    instead of shell scripts (judgment calls recorded in each phase's design.md).
+  - Consumer-side Tailwind form confirmed by the PoC: a separate CSS entry (§10).

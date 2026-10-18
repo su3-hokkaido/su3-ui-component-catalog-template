@@ -31,7 +31,7 @@ Derived values:
 
 1. Check that the title is unused: grep for `title: '{Category}/{Component}'` in `src/shared` and in
    the target product. Stop and ask if it exists.
-2. Check the tokens available in `src/styles/index.css` (`@theme`). If the component needs a value
+2. Check the tokens available in `src/styles/theme.css` (`@theme`). If the component needs a value
    that has no token, add the token there first.
 3. Create the four files, following the existing sample components (`src/shared/components/actions/Button`
    and `src/products/sample/components/buttons/Toggle`) when they exist; otherwise use these

@@ -38,7 +38,7 @@ Summary of `docs/project_plan.md` §3, §4, §10 and §13:
   `--default`. Titles must be unique across `shared` and each product.
 - Styling: Tailwind utilities only, always with the `uic:` prefix; no per-component CSS files; no
   arbitrary values (`bg-[#123456]`); colors, spacing, radius and fonts come from the `@theme`
-  tokens in `src/styles/index.css`.
+  tokens in `src/styles/theme.css`.
 - Components must not rely on preflight (it is not shipped); set what you need explicitly, e.g.
   `uic:border uic:border-solid`.
 - Merge classes with `cn()` (`src/lib/cn.ts`) and accept a `className` prop; define variants with
@@ -50,7 +50,7 @@ Summary of `docs/project_plan.md` §3, §4, §10 and §13:
 ## Libraries and tooling
 
 - To learn a library/framework API, **use the Context7 MCP** for current docs rather than memory —
-  especially Storybook, Tailwind CSS v4, Vitest, Playwright, tsup and Changesets, which move fast.
+  especially Storybook, Tailwind CSS v4, Vitest, Playwright, tsdown and Changesets, which move fast.
   For Cloudflare (Pages, `_redirects`, wrangler), use the Cloudflare documentation search.
 - Docker is the default environment. Run commands through `make` targets (`make help` lists them);
   `local-*` targets exist for running on the host.
