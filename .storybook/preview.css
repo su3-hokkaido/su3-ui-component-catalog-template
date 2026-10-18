@@ -1,0 +1,9 @@
+/*
+ * Storybook-only canvas styling. It is not part of the distributed CSS: the library ships without
+ * preflight or page-level styles, so the canvas background and text color are set here to follow
+ * the active theme.
+ */
+body {
+  background-color: var(--uic-color-surface);
+  color: var(--uic-color-foreground);
+}
