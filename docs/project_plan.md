@@ -26,22 +26,23 @@
 
 ## 2. Tech Stack
 
-| Category | Tool | Notes |
-|---|---|---|
-| Hosting | GitHub | Template repository, Actions, Releases |
-| UI | React + TypeScript | `strict: true` |
-| Styling | Tailwind CSS | Latest major (v4, CSS-first configuration). See §10 |
-| Catalog | Storybook | Latest stable (Vite builder). Addons: `@storybook/addon-a11y`, `@storybook/addon-docs`. Controls, actions, viewport and interactions are part of Storybook core since v9 and are not installed separately |
-| Package manager | pnpm | Pinned via Corepack (`packageManager` field) |
-| Runtime | Node.js | Active LTS, with the **major version pinned explicitly** in `.nvmrc` and `engines` (see note below) |
-| Unit test | Vitest + React Testing Library | `jsdom` environment, `@testing-library/jest-dom` matchers |
-| Lint / Format | ESLint (flat config) + Prettier | `eslint-config-prettier` to avoid conflicts |
-| Library build | tsup (esbuild based) | Emits ESM + CJS + `.d.ts` |
-| Container | Dockerfile + docker compose | Local development assumes Docker |
-| Task runner | Makefile | Single entry point for every command |
-| Deploy | Cloudflare Pages (Workers Static Assets only if Pages cannot meet the requirements) | Structured so that other clouds can be swapped in. See §4 |
-| Visual regression test | Playwright | `toHaveScreenshot` against the built Storybook. See §11 |
-| Versioning | Changesets | SemVer (MAJOR.MINOR.PATCH) |
+| Category               | Tool                                                                                | Notes                                                                                                                                                                                                                                                    |
+| ---------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hosting                | GitHub                                                                              | Template repository, Actions, Releases                                                                                                                                                                                                                   |
+| UI                     | React + TypeScript                                                                  | `strict: true`                                                                                                                                                                                                                                           |
+| Styling                | Tailwind CSS                                                                        | Latest major (v4, CSS-first configuration). See §10                                                                                                                                                                                                      |
+| Catalog                | Storybook                                                                           | Latest stable (Vite builder). Addons: `@storybook/addon-a11y`, `@storybook/addon-docs`, `@storybook/addon-themes` (dark-mode toolbar). Controls, actions, viewport and interactions are part of Storybook core since v9 and are not installed separately |
+| Package manager        | pnpm                                                                                | Pinned with the `packageManager` field. pnpm itself switches to that version on the host; the Dockerfile installs Corepack explicitly, because Node.js 25+ no longer bundles it                                                                          |
+| Runtime                | Node.js                                                                             | **26** (owner decision; Active LTS from late October 2026), pinned in `.nvmrc` and `engines` (see note below)                                                                                                                                            |
+| Language               | TypeScript                                                                          | 6.0.x until typescript-eslint and Storybook's docgen support TypeScript 7 (the native port)                                                                                                                                                              |
+| Unit test              | Vitest + React Testing Library                                                      | `jsdom` environment, `@testing-library/jest-dom` matchers                                                                                                                                                                                                |
+| Lint / Format          | ESLint (flat config) + Prettier                                                     | ESLint 10. `eslint-config-prettier` to avoid conflicts. `eslint-plugin-jsx-a11y` is not used (it supports ESLint 9 at most); accessibility is covered by the a11y addon and role-based tests                                                             |
+| Library build          | tsup (esbuild based)                                                                | Emits ESM + CJS + `.d.ts`                                                                                                                                                                                                                                |
+| Container              | Dockerfile + docker compose                                                         | Local development assumes Docker                                                                                                                                                                                                                         |
+| Task runner            | Makefile                                                                            | Single entry point for every command                                                                                                                                                                                                                     |
+| Deploy                 | Cloudflare Pages (Workers Static Assets only if Pages cannot meet the requirements) | Structured so that other clouds can be swapped in. See §4                                                                                                                                                                                                |
+| Visual regression test | Playwright                                                                          | `toHaveScreenshot` against the built Storybook. See §11                                                                                                                                                                                                  |
+| Versioning             | Changesets                                                                          | SemVer (MAJOR.MINOR.PATCH)                                                                                                                                                                                                                               |
 
 Node.js note: as of 2026-10, Node.js 24 is the Active LTS and Node.js 26 is scheduled to be
 promoted to LTS in late October 2026. Pick the Active LTS major at implementation time, write it
@@ -194,6 +195,7 @@ Storybook URLs are natively of the form `/?path=/story/buttons-toggle--default`;
    - Local (Docker): `deploy/local/nginx.conf` serves the production build with an equivalent rule,
      for example
      `location ~ ^/([^/]+)/c/([^/]+)/([^/]+)/?$ { return 302 /$1/?path=/story/$2-$3--default; }`.
+
 4. `make dev` (Storybook dev server with HMR) targets a single productId and uses the native
    Storybook URLs. Clean URLs are checked with `make preview` (serves the built output).
 
@@ -257,26 +259,26 @@ Requirements Pages must meet:
 `make help` lists every target with its description. The product is always selected with the
 `PRODUCT_ID` variable. Minimum targets:
 
-| Target | Description |
-|---|---|
-| `make help` | List targets |
-| `make setup` | Copy `.env.*.sample`, build images, install dependencies |
-| `make up` / `make down` | Start / stop docker compose |
-| `make dev PRODUCT_ID=sample` | Storybook dev server (http://localhost:5070); defaults to `sample` |
-| `make preview` | Build every productId and serve with nginx (http://localhost:5071) |
-| `make vrt` | Run the Playwright visual regression test (in Docker) |
-| `make vrt-update` | Update baseline images |
-| `make install PKG=xxx` | `pnpm add` inside the container |
-| `make lint` / `make format` / `make typecheck` | Static analysis and formatting |
-| `make test` / `make test-watch` | Vitest |
-| `make build` | Package build (tsup + CSS) |
-| `make build-storybook` | Storybook build for every productId |
-| `make ci` | Run the same checks as CI locally |
-| `make new-product PRODUCT_ID=xxx` | Scaffold a productId |
-| `make secrets-pull-aws` | Generate `.env.local` from AWS Secrets Manager |
-| `make secrets-push-cloudflare` | (Optional) Push secrets to Cloudflare. Changes remote state |
-| `make changeset` | Create a changeset |
-| `make shell` | Open a shell in the container |
+| Target                                         | Description                                                        |
+| ---------------------------------------------- | ------------------------------------------------------------------ |
+| `make help`                                    | List targets                                                       |
+| `make setup`                                   | Copy `.env.*.sample`, build images, install dependencies           |
+| `make up` / `make down`                        | Start / stop docker compose                                        |
+| `make dev PRODUCT_ID=sample`                   | Storybook dev server (http://localhost:5070); defaults to `sample` |
+| `make preview`                                 | Build every productId and serve with nginx (http://localhost:5071) |
+| `make vrt`                                     | Run the Playwright visual regression test (in Docker)              |
+| `make vrt-update`                              | Update baseline images                                             |
+| `make install PKG=xxx`                         | `pnpm add` inside the container                                    |
+| `make lint` / `make format` / `make typecheck` | Static analysis and formatting                                     |
+| `make test` / `make test-watch`                | Vitest                                                             |
+| `make build`                                   | Package build (tsup + CSS)                                         |
+| `make build-storybook`                         | Storybook build for every productId                                |
+| `make ci`                                      | Run the same checks as CI locally                                  |
+| `make new-product PRODUCT_ID=xxx`              | Scaffold a productId                                               |
+| `make secrets-pull-aws`                        | Generate `.env.local` from AWS Secrets Manager                     |
+| `make secrets-push-cloudflare`                 | (Optional) Push secrets to Cloudflare. Changes remote state        |
+| `make changeset`                               | Create a changeset                                                 |
+| `make shell`                                   | Open a shell in the container                                      |
 
 ---
 
@@ -322,13 +324,13 @@ Therefore:
 
 ### Workflows
 
-| File | Trigger | Jobs |
-|---|---|---|
-| `ci.yml` | `pull_request`, and `push` to `main` / `develop` only | `prettier --check`, `eslint`, `tsc --noEmit`, `vitest run` (coverage), Storybook build, package build |
-| `deploy_dev.yml` | push to `develop` | Build every Storybook -> deploy to the Cloudflare preview environment |
-| `deploy_prod.yml` | push to `main` | Build every Storybook -> deploy to Cloudflare production |
-| `vrt.yml` | `pull_request` | Build every Storybook -> Playwright VRT. Upload the diff report as an artifact on failure |
-| `release.yml` | push to `main` | Changesets action: open/update the "Version Packages" PR, or on its merge tag / GitHub Release / npm publish, then open the `main` -> `develop` back-merge PR |
+| File              | Trigger                                               | Jobs                                                                                                                                                          |
+| ----------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ci.yml`          | `pull_request`, and `push` to `main` / `develop` only | `prettier --check`, `eslint`, `tsc --noEmit`, `vitest run` (coverage), Storybook build, package build                                                         |
+| `deploy_dev.yml`  | push to `develop`                                     | Build every Storybook -> deploy to the Cloudflare preview environment                                                                                         |
+| `deploy_prod.yml` | push to `main`                                        | Build every Storybook -> deploy to Cloudflare production                                                                                                      |
+| `vrt.yml`         | `pull_request`                                        | Build every Storybook -> Playwright VRT. Upload the diff report as an artifact on failure                                                                     |
+| `release.yml`     | push to `main`                                        | Changesets action: open/update the "Version Packages" PR, or on its merge tag / GitHub Release / npm publish, then open the `main` -> `develop` back-merge PR |
 
 - Deploy logic is confined to `deploy/cloudflare/` scripts and the reusable `_deploy.yml`, so
   switching to AWS/Azure touches as few files as possible.
@@ -443,10 +445,10 @@ never resets the consumer's page.
      ```css
      /* ui-catalog.css (separate from the consumer's own Tailwind entry) */
      @layer theme, utilities;
-     @import "tailwindcss/theme.css" layer(theme) prefix(uic);
-     @import "tailwindcss/utilities.css" layer(utilities) prefix(uic);
-     @import "su3-ui-component-catalog-template/theme.css";
-     @source "../node_modules/su3-ui-component-catalog-template/dist";
+     @import 'tailwindcss/theme.css' layer(theme) prefix(uic);
+     @import 'tailwindcss/utilities.css' layer(utilities) prefix(uic);
+     @import 'su3-ui-component-catalog-template/theme.css';
+     @source '../node_modules/su3-ui-component-catalog-template/dist';
      ```
    - Tailwind's documentation also shows importing `theme.css` / `utilities.css` twice in one file,
      with and without a prefix. Phase 4 includes a proof of concept that confirms which form works
