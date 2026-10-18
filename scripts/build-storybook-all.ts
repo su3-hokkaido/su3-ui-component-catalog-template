@@ -13,8 +13,9 @@
  * container always has one.
  */
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
+import { listProductIds } from './lib/products.ts';
 import {
   collectCleanUrls,
   isValidProductId,
@@ -26,15 +27,8 @@ import {
 const root = resolve(import.meta.dirname, '..');
 const outDir = join(root, 'dist/storybook');
 
-function listProducts(): string[] {
-  return readdirSync(join(root, 'src/products'), { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name)
-    .sort();
-}
-
 function selectProducts(requested: string[]): string[] {
-  const products = listProducts();
+  const products = listProductIds(root);
   if (products.length === 0) {
     throw new Error('src/products contains no product.');
   }

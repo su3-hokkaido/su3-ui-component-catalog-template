@@ -33,7 +33,7 @@ EXPOSE 5070
 
 CMD ["pnpm", "run", "dev", "--ci"]
 
-# --- build: self-contained build of every product into dist/storybook ----------------------
+# --- build: self-contained build of the package and every product's Storybook --------------
 FROM base AS build
 
 COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -42,7 +42,7 @@ RUN --mount=type=cache,target=/home/node/.cache/pnpm-store,uid=1000,gid=1000 \
   npm_config_store_dir=/home/node/.cache/pnpm-store pnpm install --frozen-lockfile
 
 COPY --chown=node:node . .
-RUN pnpm run build-storybook:all
+RUN pnpm run build && pnpm run build-storybook:all
 
 # --- preview: nginx serving the build with the same clean-URL rule as Cloudflare -------------
 # The unprivileged image runs nginx as a non-root user and listens on 8080.

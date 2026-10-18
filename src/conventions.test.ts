@@ -1,10 +1,11 @@
 /**
- * Mechanical checks for the component conventions in docs/project_plan.md sections 3, 4 and 13.
+ * Mechanical checks for the conventions in docs/project_plan.md sections 3, 4, 9 and 13.
  * They run with the unit tests so that a convention violation fails `pnpm run ci`.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { expectedExports } from '../scripts/lib/package-exports.ts';
 import { isValidProductId } from '../scripts/lib/storybook-site.ts';
 
 const root = process.cwd();
@@ -116,5 +117,14 @@ describe('component conventions', () => {
 
       expect(new Set(titles).size).toBe(titles.length);
     });
+  });
+
+  it('exports every product from package.json, so none is left out of the package', () => {
+    const packageJson = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8')) as {
+      exports?: unknown;
+    };
+
+    // Add a product with `make new-product`, which writes this map.
+    expect(packageJson.exports).toEqual(expectedExports(products));
   });
 });

@@ -1,4 +1,7 @@
 allowBuilds:
+  # @tailwindcss/cli depends on it for --watch. Its install script only compiles from source when
+  # no prebuilt binary matches the platform, and the prebuilt ones cover macOS and Linux.
+  '@parcel/watcher': false
   esbuild: true
   unrs-resolver: true
   workerd: true

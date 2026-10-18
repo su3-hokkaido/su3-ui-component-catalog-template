@@ -78,13 +78,22 @@ test: ## Run unit tests with coverage
 test-watch: ## Run unit tests in watch mode
 	$(RUN) pnpm run test:watch
 
+.PHONY: build
+build: ## Build the npm package into dist (tsdown, styles.css, theme.css)
+	$(RUN) pnpm run build
+
 .PHONY: build-storybook
 build-storybook: ## Rebuild dist/storybook with every productId (or only PRODUCT_ID) and the portal
 	$(RUN) pnpm run build-storybook:all $(PRODUCT_ID)
 
 .PHONY: ci
-ci: ## Run the CI checks (format check, lint, typecheck, tests, Storybook build)
+ci: ## Run the CI checks (format check, lint, typecheck, tests, package build and checks, Storybook build)
 	$(RUN) pnpm run ci
+
+.PHONY: new-product
+new-product: ## Scaffold src/products/PRODUCT_ID and add its package export (PRODUCT_ID is required)
+	$(if $(PRODUCT_ID),,$(error PRODUCT_ID is required, e.g. make new-product PRODUCT_ID=acme-web))
+	$(RUN) pnpm run new-product '$(PRODUCT_ID)'
 
 .PHONY: clean
 clean: ## Remove the containers, the node_modules volume and the built images
@@ -116,6 +125,10 @@ local-typecheck: ## Type-check on the host
 local-test: ## Run unit tests with coverage on the host
 	pnpm run test
 
+.PHONY: local-build
+local-build: ## Build the npm package into dist on the host
+	pnpm run build
+
 .PHONY: local-build-storybook
 local-build-storybook: ## Rebuild dist/storybook with every productId (or only PRODUCT_ID) on the host
 	pnpm run build-storybook:all $(PRODUCT_ID)
@@ -123,3 +136,8 @@ local-build-storybook: ## Rebuild dist/storybook with every productId (or only P
 .PHONY: local-ci
 local-ci: ## Run the CI checks on the host
 	pnpm run ci
+
+.PHONY: local-new-product
+local-new-product: ## Scaffold src/products/PRODUCT_ID on the host (PRODUCT_ID is required)
+	$(if $(PRODUCT_ID),,$(error PRODUCT_ID is required, e.g. make local-new-product PRODUCT_ID=acme-web))
+	pnpm run new-product '$(PRODUCT_ID)'

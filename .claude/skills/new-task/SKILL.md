@@ -21,7 +21,7 @@ Create the paired planning documents this project requires before implementation
    - Background / why (link to the relevant section of `docs/project_plan.md`, e.g. `§4`)
    - Requirements and non-goals
    - Technical approach and key decisions (stack: React + TypeScript, Storybook, Tailwind CSS v4
-     with the `uic` prefix, tsup, Vitest, Playwright VRT, Docker + Makefile, Cloudflare Pages)
+     with the `uic` prefix, tsdown, Vitest, Playwright VRT, Docker + Makefile, Cloudflare Pages)
    - Affected files/directories, including impact on design tokens, package `exports`, story
      titles / clean URLs, VRT baselines and README / README_JA
    - Any judgment call not covered by `docs/project_plan.md`, with its reasoning
@@ -30,7 +30,7 @@ Create the paired planning documents this project requires before implementation
    enough that each maps to a single commit. Example:
    ```markdown
    # Tasks
-   - [ ] Add the color tokens for the component to src/styles/index.css
+   - [ ] Add the color tokens for the component to src/styles/theme.css
    - [ ] Scaffold Toggle with /new-component (component, story, test, index)
    - [ ] Implement variants with cva and cover them in Vitest
    - [ ] Export Toggle from src/products/sample/index.ts
