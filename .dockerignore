@@ -5,6 +5,7 @@ node_modules
 coverage
 dist
 storybook-static
+.wrangler
 test-results
 playwright-report
 blob-report

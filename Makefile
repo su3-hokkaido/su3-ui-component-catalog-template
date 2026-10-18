@@ -38,9 +38,13 @@ dev: ## Start the Storybook dev server in the foreground (PRODUCT_ID=sample, htt
 up: ## Start the Storybook dev server in the background
 	$(COMPOSE) up --detach storybook
 
+.PHONY: preview
+preview: ## Build every productId and serve it with nginx in the foreground (http://localhost:5071)
+	$(COMPOSE) --profile preview up --build preview
+
 .PHONY: down
-down: ## Stop and remove the containers
-	$(COMPOSE) down
+down: ## Stop and remove the containers, including preview
+	$(COMPOSE) --profile '*' down
 
 .PHONY: logs
 logs: ## Follow the dev server logs
@@ -75,16 +79,16 @@ test-watch: ## Run unit tests in watch mode
 	$(RUN) pnpm run test:watch
 
 .PHONY: build-storybook
-build-storybook: ## Build Storybook for PRODUCT_ID into storybook-static
-	$(RUN) pnpm run build-storybook
+build-storybook: ## Rebuild dist/storybook with every productId (or only PRODUCT_ID) and the portal
+	$(RUN) pnpm run build-storybook:all $(PRODUCT_ID)
 
 .PHONY: ci
 ci: ## Run the CI checks (format check, lint, typecheck, tests, Storybook build)
 	$(RUN) pnpm run ci
 
 .PHONY: clean
-clean: ## Remove the containers, the node_modules volume and the built image
-	$(COMPOSE) down --volumes --rmi local
+clean: ## Remove the containers, the node_modules volume and the built images
+	$(COMPOSE) --profile '*' down --volumes --rmi local
 
 ##@ Host (requires Node.js and pnpm on the host)
 
@@ -113,8 +117,8 @@ local-test: ## Run unit tests with coverage on the host
 	pnpm run test
 
 .PHONY: local-build-storybook
-local-build-storybook: ## Build Storybook for PRODUCT_ID on the host
-	$(if $(PRODUCT_ID),PRODUCT_ID='$(PRODUCT_ID)') pnpm run build-storybook
+local-build-storybook: ## Rebuild dist/storybook with every productId (or only PRODUCT_ID) on the host
+	pnpm run build-storybook:all $(PRODUCT_ID)
 
 .PHONY: local-ci
 local-ci: ## Run the CI checks on the host

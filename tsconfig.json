@@ -14,7 +14,9 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
     "types": ["node", "vite/client", "@testing-library/jest-dom/vitest"]
   },
-  "include": ["src", ".storybook/**/*", "*.config.ts"]
+  "include": ["src", "scripts", ".storybook/**/*", "*.config.ts"]
 }

@@ -6,3 +6,4 @@ storybook-static
 test-results
 playwright-report
 .claude
+.wrangler

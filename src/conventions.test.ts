@@ -5,6 +5,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { isValidProductId } from '../scripts/lib/storybook-site.ts';
 
 const root = process.cwd();
 const sharedDir = resolve(root, 'src/shared');
@@ -103,6 +104,10 @@ describe('component conventions', () => {
   );
 
   describe.each(products)('build for product "%s"', (product) => {
+    it('uses a kebab-case productId, because it is a URL path segment', () => {
+      expect(isValidProductId(product)).toBe(true);
+    });
+
     it('has unique story titles across src/shared and the product', () => {
       const titles = [
         ...sharedComponents,
