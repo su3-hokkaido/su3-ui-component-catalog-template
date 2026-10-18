@@ -32,7 +32,7 @@
 | UI                     | React + TypeScript                                                                  | `strict: true`                                                                                                                                                                                                                                           |
 | Styling                | Tailwind CSS                                                                        | Latest major (v4, CSS-first configuration). See §10                                                                                                                                                                                                      |
 | Catalog                | Storybook                                                                           | Latest stable (Vite builder). Addons: `@storybook/addon-a11y`, `@storybook/addon-docs`, `@storybook/addon-themes` (dark-mode toolbar). Controls, actions, viewport and interactions are part of Storybook core since v9 and are not installed separately |
-| Package manager        | pnpm                                                                                | Pinned with the `packageManager` field. pnpm itself switches to that version on the host; the Dockerfile installs Corepack explicitly, because Node.js 25+ no longer bundles it                                                                          |
+| Package manager        | pnpm                                                                                | Pinned with the `packageManager` field. pnpm itself switches to that version on the host; the Dockerfile installs that exact version with npm, because Node.js 25+ no longer bundles Corepack                                                            |
 | Runtime                | Node.js                                                                             | **26** (owner decision; Active LTS from late October 2026), pinned in `.nvmrc` and `engines` (see note below)                                                                                                                                            |
 | Language               | TypeScript                                                                          | 6.0.x until typescript-eslint and Storybook's docgen support TypeScript 7 (the native port)                                                                                                                                                              |
 | Unit test              | Vitest + React Testing Library                                                      | `jsdom` environment, `@testing-library/jest-dom` matchers                                                                                                                                                                                                |
@@ -241,12 +241,15 @@ Requirements Pages must meet:
 
 - Docker is the default; the project must work without Node.js installed on the host.
 - The `Dockerfile` is multi-stage:
-  - `dev`: Node.js (pinned LTS major) + Corepack (pnpm). Runs the Storybook dev server.
+  - `base`: Node.js (pinned major) + the pnpm version from `packageManager`, installed with npm.
+  - `dev`: runs the Storybook dev server, listening on `0.0.0.0` (`SBCONFIG_HOSTNAME`).
   - `build`: builds Storybook and the package.
   - `preview`: nginx serving the build output, including the URL rewrite (`deploy/local/nginx.conf`).
 - `compose.yaml`:
-  - `storybook` service (dev): host `5070` -> container `5070` (start Storybook with `-p 5070` and
-    align the HMR WebSocket port). Source is bind-mounted; `node_modules` is a named volume.
+  - `storybook` service (dev): host `5070` -> container `5070` (Storybook runs with `-p 5070`; HMR
+    uses the same server, so only the host side of the mapping changes). Source is bind-mounted;
+    `node_modules` is a named volume that also holds the pnpm store. Tool targets (`make lint`,
+    `make ci`, ...) run in one-off containers of this service.
   - `preview` service (behind a profile): host `5071` -> nginx.
   - `vrt` service (behind a profile): the official Playwright image, see §11.
   - Ports are configurable via `DEV_PORT=5070` / `PREVIEW_PORT=5071` in `.env.docker`.
