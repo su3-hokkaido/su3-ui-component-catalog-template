@@ -1,0 +1,4 @@
+# Clean URLs (docs/project_plan.md section 4): /{productId}/c/{category}/{component} opens the
+# Default story of that component. Keep in sync with deploy/local/nginx.conf.
+/:productId/c/:category/:component  /:productId/?path=/story/:category-:component--default  302
+/:productId/c/:category/:component/  /:productId/?path=/story/:category-:component--default  302

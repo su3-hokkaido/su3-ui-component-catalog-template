@@ -96,7 +96,8 @@ explicitly (e.g. `24`), and use the same major in `.nvmrc`, `engines`, the Docke
 │   ├── project_plan.md         # this document
 │   └── {yyyy-mm-dd}_{NN}_{overview}/   # per-task design.md + task.md
 ├── scripts/
-│   ├── build-storybook-all.sh  # builds every productId into dist/storybook/{productId}/
+│   ├── build-storybook-all.ts  # builds every productId into dist/storybook/{productId}/ + portal
+│   ├── lib/                    # tested helpers for the scripts (clean URLs, portal rendering)
 │   ├── secrets-pull-aws.sh
 │   └── new-product.sh          # scaffolds a productId
 ├── src/
@@ -191,7 +192,8 @@ Storybook URLs are natively of the form `/?path=/story/buttons-toggle--default`;
      ```
      Cloudflare's documentation confirms that destinations may contain query strings and
      placeholders, and placeholder names are `[A-Za-z]\w*`, so `:category-:component` should
-     expand correctly. Verify this with a real preview deploy before marking §15 complete.
+     expand correctly. Phase 3 confirmed this locally with `wrangler pages dev`; verify it with a
+     real preview deploy before marking §15 complete.
    - Local (Docker): `deploy/local/nginx.conf` serves the production build with an equivalent rule,
      for example
      `location ~ ^/([^/]+)/c/([^/]+)/([^/]+)/?$ { return 302 /$1/?path=/story/$2-$3--default; }`.
@@ -244,13 +246,14 @@ Requirements Pages must meet:
   - `base`: Node.js (pinned major) + the pnpm version from `packageManager`, installed with npm.
   - `dev`: runs the Storybook dev server, listening on `0.0.0.0` (`SBCONFIG_HOSTNAME`).
   - `build`: builds Storybook and the package.
-  - `preview`: nginx serving the build output, including the URL rewrite (`deploy/local/nginx.conf`).
+  - `preview`: unprivileged nginx (port 8080) serving `dist/storybook`, including the URL rewrite
+    (`deploy/local/nginx.conf`).
 - `compose.yaml`:
   - `storybook` service (dev): host `5070` -> container `5070` (Storybook runs with `-p 5070`; HMR
     uses the same server, so only the host side of the mapping changes). Source is bind-mounted;
     `node_modules` is a named volume that also holds the pnpm store. Tool targets (`make lint`,
     `make ci`, ...) run in one-off containers of this service.
-  - `preview` service (behind a profile): host `5071` -> nginx.
+  - `preview` service (behind a profile): host `5071` -> nginx `8080`.
   - `vrt` service (behind a profile): the official Playwright image, see §11.
   - Ports are configurable via `DEV_PORT=5070` / `PREVIEW_PORT=5071` in `.env.docker`.
 - For people who have Node.js on the host, `make` also provides non-Docker targets (`local-*`).

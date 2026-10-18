@@ -154,3 +154,6 @@ storybook-static/
 test-results/
 playwright-report/
 blob-report/
+
+# Wrangler local state
+.wrangler/

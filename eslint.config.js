@@ -35,7 +35,14 @@ const dependencyZones = [
 ];
 
 export default defineConfig(
-  globalIgnores(['coverage', 'dist', 'storybook-static', 'test-results', 'playwright-report']),
+  globalIgnores([
+    'coverage',
+    'dist',
+    'storybook-static',
+    'test-results',
+    'playwright-report',
+    '.wrangler',
+  ]),
   js.configs.recommended,
   tseslint.configs.strictTypeChecked,
   {
