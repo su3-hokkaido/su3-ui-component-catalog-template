@@ -90,6 +90,19 @@ build-storybook: ## Rebuild dist/storybook with every productId (or only PRODUCT
 ci: ## Run the CI checks (format check, lint, typecheck, tests, package build and checks, Storybook build)
 	$(RUN) pnpm run ci
 
+.PHONY: vrt
+vrt: ## Rebuild every Storybook and run the visual regression test in the Playwright image
+	$(RUN) pnpm run build-storybook:all
+	@# Created here so that Docker does not create the bind-mount sources as root.
+	mkdir -p test-results playwright-report
+	$(COMPOSE) --profile vrt run --rm --build vrt
+
+.PHONY: vrt-update
+vrt-update: ## Rebuild every Storybook and update the changed or missing VRT baselines
+	$(RUN) pnpm run build-storybook:all
+	mkdir -p test-results playwright-report
+	$(COMPOSE) --profile vrt run --rm --build vrt npx playwright test --update-snapshots=changed
+
 .PHONY: new-product
 new-product: ## Scaffold src/products/PRODUCT_ID and add its package export (PRODUCT_ID is required)
 	$(if $(PRODUCT_ID),,$(error PRODUCT_ID is required, e.g. make new-product PRODUCT_ID=acme-web))

@@ -38,7 +38,11 @@ findings, do not edit files. The specification is `docs/project_plan.md` (ยง3, ย
 - Story `title` is `{Category}/{Component}` with no productId, and is not already used in
   `src/shared` (search for duplicate titles).
 - A `Default` story is exported (clean URLs point at `--default`).
-- `parameters.vrt`, if present, uses only the documented keys (`disable`, `viewports`).
+- `parameters.vrt`, if present, uses only the documented keys (`disable`, `viewports` with
+  `desktop` / `mobile`).
+- A new or visually changed story comes with added or updated baselines under
+  `tests/vrt/__screenshots__/{desktop,mobile}/{shared|productId}/`, and a removed or renamed story
+  removes its old baselines.
 - Tests use Vitest + React Testing Library, query by role/label rather than class names, and cover
   each variant's behavior that matters (not just "renders").
 
