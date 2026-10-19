@@ -1,5 +1,5 @@
 /**
- * Mechanical checks for the conventions in docs/project_plan.md sections 3, 4, 9 and 13.
+ * Mechanical checks for the conventions in docs/project_plan.md sections 3, 4, 9, 11 and 13.
  * They run with the unit tests so that a convention violation fails `pnpm run ci`.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
@@ -126,5 +126,16 @@ describe('component conventions', () => {
 
     // Add a product with `make new-product`, which writes this map.
     expect(packageJson.exports).toEqual(expectedExports(products));
+  });
+
+  it('runs the VRT in the Playwright image that matches @playwright/test', () => {
+    const packageJson = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8')) as {
+      devDependencies?: Record<string, string>;
+    };
+    const dockerfile = readFileSync(resolve(root, 'Dockerfile'), 'utf8');
+    const tag = /^FROM mcr\.microsoft\.com\/playwright:v(\S+?)-\S+ AS vrt$/m.exec(dockerfile)?.[1];
+
+    // Bump both together, or the browser build differs from the one the baselines came from.
+    expect(tag).toBe(packageJson.devDependencies?.['@playwright/test']);
   });
 });

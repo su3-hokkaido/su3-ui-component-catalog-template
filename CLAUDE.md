@@ -45,7 +45,11 @@ Summary of `docs/project_plan.md` §3, §4, §10 and §13:
   cva.
 - Dependency direction: products may import `shared`; `shared` never imports products; products
   never import each other.
-- No a11y addon violations. Optional per-story VRT settings go in `parameters.vrt`.
+- No a11y addon violations. Optional per-story VRT settings go in `parameters.vrt`:
+  `{ disable?: boolean; viewports?: ('desktop' | 'mobile')[] }` (validated by `tests/vrt/stories.ts`).
+- After a visual change or a new story, run `make vrt-update` and review the changed baselines in
+  `tests/vrt/__screenshots__/`; delete the baselines of removed or renamed stories, and of stories or viewports you exclude
+  with `parameters.vrt` (the orphan check cannot see those).
 
 ## Libraries and tooling
 

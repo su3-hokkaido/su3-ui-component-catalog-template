@@ -6,10 +6,10 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts', 'tests/vrt/**/*.test.ts'],
     coverage: {
       provider: 'v8',
-      include: ['src/**/*.{ts,tsx}', 'scripts/lib/**/*.ts'],
+      include: ['src/**/*.{ts,tsx}', 'scripts/lib/**/*.ts', 'tests/vrt/stories.ts'],
       exclude: ['src/**/*.stories.tsx', '**/*.test.{ts,tsx}', 'src/test/**'],
     },
   },

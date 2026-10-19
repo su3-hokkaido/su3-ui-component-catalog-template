@@ -44,7 +44,28 @@ RUN --mount=type=cache,target=/home/node/.cache/pnpm-store,uid=1000,gid=1000 \
 COPY --chown=node:node . .
 RUN pnpm run build && pnpm run build-storybook:all
 
+# --- vrt: Playwright visual regression test (docs/project_plan.md section 11) ----------------
+# The official image fixes the browser build, fonts and system libraries, so screenshots match
+# between machines and CI. Keep the tag equal to @playwright/test in package.json (checked by
+# src/conventions.test.ts). Only @playwright/test is installed: the suite needs nothing else, and
+# the image's Node.js does not match engines.node. compose.yaml bind-mounts the config, tests/vrt
+# and dist/storybook.
+FROM mcr.microsoft.com/playwright:v1.64.1-noble AS vrt
+
+WORKDIR /app
+COPY package.json /tmp/package.json
+RUN chown pwuser:pwuser /app \
+  && su pwuser -c "npm install --no-save --no-package-lock --no-audit --no-fund \
+    @playwright/test@$(node -p "require('/tmp/package.json').devDependencies['@playwright/test']")" \
+  && rm /tmp/package.json
+
+# pwuser is uid 1001, the same as the GitHub Actions runner user.
+USER pwuser
+
+CMD ["npx", "playwright", "test"]
+
 # --- preview: nginx serving the build with the same clean-URL rule as Cloudflare -------------
+# Kept as the last stage, so a build without --target produces this image.
 # The unprivileged image runs nginx as a non-root user and listens on 8080.
 FROM nginxinc/nginx-unprivileged:1.30-alpine AS preview
 

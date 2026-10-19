@@ -130,6 +130,7 @@ explicitly (e.g. `24`), and use the same major in `.nvmrc`, `engines`, the Docke
 ├── tests/
 │   └── vrt/
 │       ├── stories.spec.ts     # enumerates every story from Storybook's index.json and captures it
+│       ├── stories.ts          # tested helpers (story list, parameters.vrt, baseline names)
 │       └── __screenshots__/    # baseline images (committed)
 ├── playwright.config.ts
 ├── .env.local.sample
@@ -258,7 +259,8 @@ Requirements Pages must meet:
     `node_modules` is a named volume that also holds the pnpm store. Tool targets (`make lint`,
     `make ci`, ...) run in one-off containers of this service.
   - `preview` service (behind a profile): host `5071` -> nginx `8080`.
-  - `vrt` service (behind a profile): the official Playwright image, see §11.
+  - `vrt` service (behind a profile): the official Playwright image, see §11. It mounts only the
+    Playwright config, `tests/vrt` and `dist/storybook`, so the image's own `node_modules` is used.
   - Ports are configurable via `DEV_PORT=5070` / `PREVIEW_PORT=5071` in `.env.docker`.
 - For people who have Node.js on the host, `make` also provides non-Docker targets (`local-*`).
 
@@ -486,15 +488,22 @@ never resets the consumer's page.
 - Stories are enumerated automatically from Storybook's `index.json`, so adding a story never
   requires writing a test. Each story is opened at `iframe.html?id=<storyId>&viewMode=story`.
 - Story `parameters` allow per-story exclusion and configuration (e.g. `vrt: { disable: true }`,
-  `vrt: { viewports: [...] }`).
+  `vrt: { viewports: [...] }`). The viewport names are `desktop` and `mobile`; unknown keys or
+  values fail the test.
+- Stories under `src/shared` are in every product's build; they are captured once, from the first
+  product. Baselines live in `tests/vrt/__screenshots__/{viewport}/{shared|productId}/` and are
+  named `{storyId}-{theme}.png`. A baseline with no matching story fails the run.
 - Capture conditions are fixed:
-  - Chromium only (initial scope). Two viewports: desktop and mobile.
+  - Chromium only (initial scope). Two viewports: desktop (`Desktop Chrome`, 1280x720) and mobile
+    (`Pixel 7`).
   - Animations disabled; wait for fonts to finish loading.
   - Both light and dark themes.
 - **To avoid font and OS rendering differences, both local runs and CI run inside the official
   Playwright Docker image** (`make vrt` runs in the container). Additionally:
   - The image tag matches the `@playwright/test` version in `package.json` exactly; bump them
-    together.
+    together (checked by `src/conventions.test.ts`). The image installs only `@playwright/test`,
+    because its Node.js (24) is not the project's; `make vrt` builds Storybook in the dev image
+    first.
   - The `vrt` service is pinned to `platform: linux/amd64`, because Apple Silicon (arm64) hosts can
     render differently from amd64 CI runners.
   - Baseline images are committed to git.
@@ -637,3 +646,7 @@ and explain the reasoning in the PR description.
   - `scripts/build-storybook-all.ts` and `scripts/new-product.ts` are TypeScript run by Node.js
     instead of shell scripts (judgment calls recorded in each phase's design.md).
   - Consumer-side Tailwind form confirmed by the PoC: a separate CSS entry (§10).
+- **2026-10-19 Phase 5**:
+  - VRT details settled (§11): viewport names, shared stories captured once, baseline layout, the
+    orphan-baseline check, and a runner image with only `@playwright/test` (judgment calls in the
+    Phase 5 design.md).

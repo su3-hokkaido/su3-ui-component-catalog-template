@@ -18,5 +18,5 @@
     "erasableSyntaxOnly": true,
     "types": ["node", "vite/client", "@testing-library/jest-dom/vitest"]
   },
-  "include": ["src", "scripts", ".storybook/**/*", "*.config.ts"]
+  "include": ["src", "scripts", "tests", ".storybook/**/*", "*.config.ts"]
 }
