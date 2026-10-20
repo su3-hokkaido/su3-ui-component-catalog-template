@@ -17,6 +17,7 @@
       "Edit(Makefile)",
       "Edit(Dockerfile)",
       "Edit(compose.yaml)",
+      "Edit(.dockerignore)",
       "Edit(package.json)",
       "Edit(tsconfig*.json)",
       "Edit(*.config.ts)",

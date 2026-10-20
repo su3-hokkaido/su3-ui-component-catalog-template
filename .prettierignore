@@ -1,0 +1,9 @@
+node_modules
+pnpm-lock.yaml
+coverage
+dist
+storybook-static
+test-results
+playwright-report
+.claude
+.wrangler

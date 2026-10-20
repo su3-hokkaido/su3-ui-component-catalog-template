@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UI Component Catalog</title>
+    <!--
+      Static portal served at "/". scripts/build-storybook-all.ts replaces the products marker
+      below with one section per productId. Styles are inline because this page is not a
+      component and is not built with Tailwind.
+    -->
+    <style>
+      :root {
+        color-scheme: light dark;
+        --background: #ffffff;
+        --foreground: #18181b;
+        --muted: #52525b;
+        --border: #e4e4e7;
+        --link: #2563eb;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --background: #09090b;
+          --foreground: #fafafa;
+          --muted: #a1a1aa;
+          --border: #27272a;
+          --link: #60a5fa;
+        }
+      }
+      body {
+        margin: 0;
+        background: var(--background);
+        color: var(--foreground);
+        font-family: system-ui, sans-serif;
+        line-height: 1.5;
+      }
+      main {
+        max-width: 48rem;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+      }
+      h1 {
+        margin: 0 0 0.25rem;
+        font-size: 1.75rem;
+      }
+      p {
+        margin: 0 0 2rem;
+        color: var(--muted);
+      }
+      .product {
+        border-top: 1px solid var(--border);
+        padding: 1rem 0;
+      }
+      .product h2 {
+        margin: 0 0 0.5rem;
+        font-size: 1.25rem;
+      }
+      .product ul {
+        margin: 0;
+        padding-left: 1.25rem;
+      }
+      a {
+        color: var(--link);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>UI Component Catalog</h1>
+      <p>Pick a product to open its Storybook, or jump straight to a component.</p>
+      <!-- products -->
+    </main>
+  </body>
+</html>

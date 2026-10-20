@@ -1,0 +1,53 @@
+services:
+  # Storybook dev server (docs/project_plan.md section 5). Tool commands such as lint and test run
+  # in one-off containers of this service through the Makefile.
+  storybook:
+    build:
+      context: .
+      target: dev
+    init: true
+    ports:
+      # The container port is fixed; only the host side is configurable.
+      - '${DEV_PORT:-5070}:5070'
+    environment:
+      PRODUCT_ID: ${PRODUCT_ID:-sample}
+    volumes:
+      - .:/app
+      # Keeps Linux dependencies separate from any node_modules on the host.
+      - node_modules:/app/node_modules
+
+  # Production build served by nginx (`make preview`). Behind a profile so that `make dev` and
+  # the tool targets do not build it.
+  preview:
+    build:
+      context: .
+      target: preview
+    profiles: [preview]
+    ports:
+      - '${PREVIEW_PORT:-5071}:8080'
+
+  # Visual regression test (`make vrt` / `make vrt-update`) against dist/storybook, which the
+  # Makefile builds first. Pinned to amd64 because arm64 hosts can render differently from the
+  # amd64 CI runners (docs/project_plan.md section 11). Only the files the suite reads or writes
+  # are mounted, so the image's own node_modules stays visible.
+  vrt:
+    build:
+      context: .
+      target: vrt
+    platform: linux/amd64
+    profiles: [vrt]
+    init: true
+    environment:
+      # Set in CI; empty (false) locally, which allows test.only while debugging.
+      CI: ${CI:-}
+    volumes:
+      # package.json makes the config and the suite ES modules ("type": "module").
+      - ./package.json:/app/package.json:ro
+      - ./playwright.config.ts:/app/playwright.config.ts:ro
+      - ./tests/vrt:/app/tests/vrt
+      - ./dist/storybook:/app/dist/storybook:ro
+      - ./test-results:/app/test-results
+      - ./playwright-report:/app/playwright-report
+
+volumes:
+  node_modules:
