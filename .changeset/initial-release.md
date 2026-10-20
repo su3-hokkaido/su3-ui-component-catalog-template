@@ -1,5 +1,5 @@
 ---
-'su3-ui-component-catalog-template': minor
+'su3-ui-component-catalog': minor
 ---
 
 First release: the shared `Button` and the `sample` product's `Toggle` components, with the
