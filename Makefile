@@ -8,6 +8,11 @@
 COMPOSE := $(if $(PRODUCT_ID),PRODUCT_ID='$(PRODUCT_ID)') docker compose $(if $(wildcard .env.docker),--env-file .env.docker)
 # One-off container for tool commands. It publishes no ports, so it also works while `make up` runs.
 RUN := $(COMPOSE) run --rm storybook
+# Node.js and Wrangler for the secrets scripts, which run on the host (for the AWS CLI) and pipe
+# values through stdin, hence -T. The Cloudflare credentials are passed through from the host.
+SECRETS_NODE := docker compose $(if $(wildcard .env.docker),--env-file .env.docker) run --rm -T storybook node
+SECRETS_WRANGLER := docker compose $(if $(wildcard .env.docker),--env-file .env.docker) run --rm -T \
+	-e CLOUDFLARE_API_TOKEN -e CLOUDFLARE_ACCOUNT_ID storybook pnpm exec wrangler
 
 ##@ General
 
@@ -15,7 +20,7 @@ RUN := $(COMPOSE) run --rm storybook
 help: ## List targets
 	@awk 'BEGIN {FS = ":.*## "} \
 		/^##@/ {printf "\n%s\n", substr($$0, 5)} \
-		/^[a-zA-Z0-9_-]+:.*## / {printf "  %-24s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+		/^[a-zA-Z0-9_-]+:.*## / {printf "  %-30s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 .PHONY: setup
 setup: ## Copy .env.*.sample files (never overwrites), build the image and install dependencies
@@ -116,6 +121,16 @@ changeset: ## Add a changeset for a change to the published package (interactive
 clean: ## Remove the containers, the node_modules volume and the built images
 	$(COMPOSE) --profile '*' down --volumes --rmi local
 
+##@ Secrets (AWS CLI v2 on the host; settings in .env.docker or on the command line)
+
+.PHONY: secrets-pull-aws
+secrets-pull-aws: ## Generate .env.local from the AWS Secrets Manager secret AWS_SECRET_ID (aws sso login if needed)
+	SECRETS_NODE='$(SECRETS_NODE)' scripts/secrets-pull-aws.sh
+
+.PHONY: secrets-push-cloudflare
+secrets-push-cloudflare: ## Push that secret to Cloudflare Pages as secrets (PAGES_ENV=production|preview). Changes remote state
+	SECRETS_NODE='$(SECRETS_NODE)' WRANGLER='$(SECRETS_WRANGLER)' scripts/secrets-push-cloudflare.sh
+
 ##@ Host (requires Node.js and pnpm on the host)
 
 .PHONY: local-install
@@ -158,6 +173,14 @@ local-ci: ## Run the CI checks on the host
 local-new-product: ## Scaffold src/products/PRODUCT_ID on the host (PRODUCT_ID is required)
 	$(if $(PRODUCT_ID),,$(error PRODUCT_ID is required, e.g. make local-new-product PRODUCT_ID=acme-web))
 	pnpm run new-product '$(PRODUCT_ID)'
+
+.PHONY: local-secrets-pull-aws
+local-secrets-pull-aws: ## Generate .env.local from AWS Secrets Manager with Node.js on the host
+	scripts/secrets-pull-aws.sh
+
+.PHONY: local-secrets-push-cloudflare
+local-secrets-push-cloudflare: ## Push the secret to Cloudflare Pages with Node.js and Wrangler on the host
+	scripts/secrets-push-cloudflare.sh
 
 .PHONY: local-changeset
 local-changeset: ## Add a changeset on the host (interactive)

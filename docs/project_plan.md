@@ -103,9 +103,11 @@ Node.js version although the components do not depend on it; pnpm fails on a mis
 │   └── {yyyy-mm-dd}_{NN}_{overview}/   # per-task design.md + task.md
 ├── scripts/
 │   ├── build-storybook-all.ts  # builds every productId into dist/storybook/{productId}/ + portal
-│   ├── lib/                    # tested helpers for the scripts (clean URLs, portal rendering)
+│   ├── lib/                    # tested helpers (clean URLs, portal, secrets) + aws-secrets.sh
 │   ├── check-package.ts        # checks the built package (exports, 'use client', styles.css)
-│   ├── secrets-pull-aws.sh
+│   ├── secrets-pull-aws.sh     # AWS Secrets Manager -> .env.local
+│   ├── secrets-push-cloudflare.sh  # optional: the same secret -> Cloudflare Pages secrets
+│   ├── secrets-to-env.ts       # SecretString (JSON) -> .env / JSON / names
 │   └── new-product.ts          # scaffolds a productId and its package export
 ├── src/
 │   ├── styles/
@@ -319,11 +321,28 @@ Therefore:
   - `make secrets-pull-aws`: `aws sso login --profile $AWS_PROFILE` ->
     `aws secretsmanager get-secret-value` -> generate `.env.local`.
   - Optional `make secrets-push-cloudflare`: push the Secrets Manager values to Cloudflare with
-    `wrangler pages secret put` (or `wrangler secret put` on Workers). One direction only.
+    `wrangler pages secret put` / `bulk` (or `wrangler secret put` on Workers). One direction only.
 - **CI/CD credentials** (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`) live in GitHub Actions
   Secrets / Environments.
 - A static Storybook deployment needs almost no runtime secrets. The template provides the
   mechanism only, and README explains where to swap in another store (1Password, Doppler, etc.).
+
+Implementation (Phase 7; details in `docs/2026-10-20_01_phase7-secrets/design.md`):
+
+- The secret's `SecretString` is a flat JSON object of variables (the console's key/value
+  format). The AWS CLI v2 runs on the host (owner decision); the conversion runs in the dev
+  container (`scripts/secrets-to-env.ts`), so the host needs no Node.js. `local-*` variants use
+  the host's Node.js.
+- Settings (not secrets) `AWS_PROFILE`, `AWS_REGION`, `AWS_SECRET_ID` and
+  `CLOUDFLARE_PROJECT_NAME` live in `.env.docker` (owner decision); the environment or the make
+  command line overrides them.
+- `.env.local` is written atomically with mode 600, values quoted so that Vite's `loadEnv` reads
+  them back exactly (values it cannot represent are rejected). A file that does not start with
+  the managed marker line is not replaced without `FORCE=1`; `.env.local.sample` starts with it.
+- The push requires `PAGES_ENV=production|preview` and a confirmation (`YES=1` skips it), reads
+  the secret from AWS rather than `.env.local`, and pipes it to `wrangler pages secret bulk`.
+- `STORYBOOK_*` variables are embedded in the built Storybook, so they must not hold real
+  secrets.
 
 ---
 
@@ -680,3 +699,6 @@ and explain the reasoning in the PR description.
   - The Node.js constraint moved from `engines` to `devEngines` (§2; owner decision).
   - Actions pinned to commit SHAs with Dependabot (owner decision); workflow details, the publish
     guard variable and the first manual publish recorded in §8 and §9; no `wrangler.jsonc` (§3).
+- **2026-10-20 Phase 7**:
+  - Secrets scripts implemented (§7): AWS CLI on the host and settings in `.env.docker` (owner
+    decisions); conversion helper, overwrite guard and push confirmation recorded in §7.
