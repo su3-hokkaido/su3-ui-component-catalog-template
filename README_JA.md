@@ -344,7 +344,9 @@ Tailwind のプレフィックスはコンパイル単位で効くため、利�
 1. 公開パッケージに影響する feature ブランチ（`develop` から切った `feature/...`）は changeset を
    追加します: `make changeset` を実行し、major、minor、patch のどれかを選んで変更内容を書きます。
 2. プルリクエストを `develop` にマージします（プレビューにデプロイされます）。
-3. リリース用のプルリクエストで `develop` を `main` にマージします（本番にデプロイされます）。
+3. `develop` に push するたびに、`create-d2m-pr.yml` が `develop` -> `main` のリリース用プルリクエストを
+   作成または更新します（git-pr-release が、マージ済みのプルリクエストを一覧にします）。これをマージすると
+   本番にデプロイされます。
 4. `main` で `release.yml` が "chore: version packages" プルリクエストを作成または更新し、
    バージョンの更新と `CHANGELOG.md` を入れます。
 5. それをマージすると `vX.Y.Z` タグと GitHub Release が作られ、npm Trusted Publishing で npm に
@@ -355,7 +357,7 @@ Tailwind のプレフィックスはコンパイル単位で効くため、利�
 リポジトリのオーナーが一度だけ行う設定:
 
 - GitHub: Settings > Actions > General で、GitHub Actions によるプルリクエストの作成と承認を許可します。
-- 既定の `GITHUB_TOKEN` で作ったプルリクエストでは CI が走りません。バージョン更新と戻しの
+- 既定の `GITHUB_TOKEN` で作ったプルリクエストでは CI が走りません。リリース用、バージョン更新、戻しの
   プルリクエストでも CI を走らせる必要があるなら、`RELEASE_TOKEN` シークレット（GitHub App の
   トークン、または contents と pull-requests に write 権限を持つ fine-grained トークン）を追加します。
 - npm: trusted publisher はすでに存在するパッケージにしか追加できないので、最初のバージョンだけ

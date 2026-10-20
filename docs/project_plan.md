@@ -85,6 +85,7 @@ Node.js version although the components do not depend on it; pnpm fails on a mis
 │   │   ├── deploy_dev.yml      # develop -> Cloudflare (preview branch alias)
 │   │   ├── deploy_prod.yml     # main -> Cloudflare (production)
 │   │   ├── vrt.yml             # Playwright visual regression test
+│   │   ├── create-d2m-pr.yml   # git-pr-release: develop -> main release PR
 │   │   └── release.yml         # Changesets: release PR -> tag -> GitHub Release -> npm publish
 │   ├── dependabot.yml          # keeps the SHA-pinned actions current
 │   ├── PULL_REQUEST_TEMPLATE.md
@@ -360,13 +361,14 @@ Implementation (Phase 7; details in `docs/2026-10-20_01_phase7-secrets/design.md
 
 ### Workflows
 
-| File              | Trigger                                               | Jobs                                                                                                                                                          |
-| ----------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ci.yml`          | `pull_request`, and `push` to `main` / `develop` only | `prettier --check`, `eslint`, `tsc --noEmit`, `vitest run` (coverage), Storybook build, package build                                                         |
-| `deploy_dev.yml`  | push to `develop`                                     | Build every Storybook -> deploy to the Cloudflare preview environment                                                                                         |
-| `deploy_prod.yml` | push to `main`                                        | Build every Storybook -> deploy to Cloudflare production                                                                                                      |
-| `vrt.yml`         | `pull_request`                                        | Build every Storybook -> Playwright VRT. Upload the diff report as an artifact on failure                                                                     |
-| `release.yml`     | push to `main`                                        | Changesets action: open/update the "Version Packages" PR, or on its merge tag / GitHub Release / npm publish, then open the `main` -> `develop` back-merge PR |
+| File                | Trigger                                               | Jobs                                                                                                                                                          |
+| ------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ci.yml`            | `pull_request`, and `push` to `main` / `develop` only | `prettier --check`, `eslint`, `tsc --noEmit`, `vitest run` (coverage), Storybook build, package build                                                         |
+| `deploy_dev.yml`    | push to `develop`                                     | Build every Storybook -> deploy to the Cloudflare preview environment                                                                                         |
+| `deploy_prod.yml`   | push to `main`                                        | Build every Storybook -> deploy to Cloudflare production                                                                                                      |
+| `vrt.yml`           | `pull_request`                                        | Build every Storybook -> Playwright VRT. Upload the diff report as an artifact on failure                                                                     |
+| `create-d2m-pr.yml` | push to `develop`                                     | git-pr-release: open/update the `develop` -> `main` release PR listing the merged PRs (`.git-pr-release`, `.github/git-pr-release.erb`)                       |
+| `release.yml`       | push to `main`                                        | Changesets action: open/update the "Version Packages" PR, or on its merge tag / GitHub Release / npm publish, then open the `main` -> `develop` back-merge PR |
 
 - Deploy logic is confined to `deploy/cloudflare/` scripts and the reusable `_deploy.yml`, so
   switching to AWS/Azure touches as few files as possible.
@@ -387,7 +389,7 @@ Implementation (Phase 7; details in `docs/2026-10-20_01_phase7-secrets/design.md
   - Actions are pinned to commit SHAs (owner decision) and updated by Dependabot against
     `develop`.
   - Pull requests opened with `GITHUB_TOKEN` do not trigger workflows; an optional `RELEASE_TOKEN`
-    secret is used for the Version Packages and back-merge pull requests when set.
+    secret is used for the release, Version Packages and back-merge pull requests when set.
 
 ### Guards for template copies and forks
 
@@ -707,3 +709,7 @@ and explain the reasoning in the PR description.
   - README / README_JA written (§12), with the owner setup from Phases 6 and 7; `CLAUDE.md` gains
     the component checklist; `deploy/aws` and `deploy/azure` hold untested outlines; no
     `CONTRIBUTING.md`.
+- **2026-10-20 Release pull request**:
+  - `create-d2m-pr.yml` (git-pr-release, added by the owner) is recorded in §3 and §8, pinned to
+    commit SHAs with a fixed gem version, and uses `RELEASE_TOKEN` when set; README step 3
+    describes it.
