@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>UI Component Catalog</title>
+    <title>Su3's UI Component Catalog</title>
     <!--
       Static portal served at "/". scripts/build-storybook-all.ts replaces the products marker
       below with one section per productId. Styles are inline because this page is not a
@@ -59,6 +59,12 @@
         margin: 0;
         padding-left: 1.25rem;
       }
+      footer {
+        border-top: 1px solid var(--border);
+        padding-top: 1rem;
+        color: var(--muted);
+        font-size: 0.875rem;
+      }
       a {
         color: var(--link);
       }
@@ -66,9 +72,15 @@
   </head>
   <body>
     <main>
-      <h1>UI Component Catalog</h1>
+      <h1>Su3's UI Component Catalog</h1>
       <p>Pick a product to open its Storybook, or jump straight to a component.</p>
       <!-- products -->
+      <footer>
+        Author:
+        <a href="https://github.com/su3-hokkaido" target="_blank" rel="noopener noreferrer"
+          >@su3-hokkaido</a
+        >
+      </footer>
     </main>
   </body>
 </html>
