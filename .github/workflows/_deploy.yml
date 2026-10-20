@@ -1,0 +1,76 @@
+# Reusable deploy of every product's Storybook (docs/project_plan.md section 8). The Cloudflare
+# specifics live here and in deploy/cloudflare/; switching clouds replaces these two.
+#
+# Configuration (template copies and forks have none, so the deploy is skipped with a notice):
+#   - repository variable CLOUDFLARE_PROJECT_NAME (repository level: a job's `if` is evaluated
+#     before its environment applies)
+#   - secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID (repository or environment level)
+name: Deploy (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: GitHub Environment of the deployment (development or production).
+        required: true
+        type: string
+      branch:
+        description: Branch the deployment is for; the Pages production branch (main) is production.
+        required: true
+        type: string
+    # Optional here: GitHub uses the deploy job's environment secrets over values passed by the
+    # caller, so the secrets may live at repository or environment level.
+    secrets:
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  not-configured:
+    name: Deploy (not configured)
+    if: vars.CLOUDFLARE_PROJECT_NAME == ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Explain the skip
+        run: >-
+          echo "::notice title=Deploy skipped::Set the repository variable
+          CLOUDFLARE_PROJECT_NAME and the secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID
+          to deploy to Cloudflare Pages."
+
+  deploy:
+    name: Deploy to Cloudflare Pages
+    if: vars.CLOUDFLARE_PROJECT_NAME != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ steps.deploy.outputs.url }}
+    # A newer push waits for the running deployment instead of cancelling it halfway.
+    concurrency:
+      group: deploy-${{ inputs.environment }}
+      cancel-in-progress: false
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Build every Storybook
+        run: pnpm run build-storybook:all
+
+      - name: Deploy
+        id: deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_PROJECT_NAME: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
+          BRANCH: ${{ inputs.branch }}
+        run: deploy/cloudflare/deploy.sh "$BRANCH"

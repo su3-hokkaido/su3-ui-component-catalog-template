@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
 
-# Keep the major in sync with .nvmrc and engines.node in package.json.
+# Keep the major in sync with .nvmrc and devEngines.runtime in package.json (checked by
+# src/conventions.test.ts).
 ARG NODE_VERSION=26
 
 # --- base: Node.js + the pnpm version pinned in package.json ---------------------------------
@@ -48,8 +49,8 @@ RUN pnpm run build && pnpm run build-storybook:all
 # The official image fixes the browser build, fonts and system libraries, so screenshots match
 # between machines and CI. Keep the tag equal to @playwright/test in package.json (checked by
 # src/conventions.test.ts). Only @playwright/test is installed: the suite needs nothing else, and
-# the image's Node.js does not match engines.node. compose.yaml bind-mounts the config, tests/vrt
-# and dist/storybook.
+# the image's Node.js does not match devEngines.runtime. compose.yaml bind-mounts the config,
+# tests/vrt and dist/storybook.
 FROM mcr.microsoft.com/playwright:v1.64.1-noble AS vrt
 
 WORKDIR /app
@@ -62,7 +63,9 @@ RUN chown pwuser:pwuser /app \
 # pwuser is uid 1001, the same as the GitHub Actions runner user.
 USER pwuser
 
-CMD ["npx", "playwright", "test"]
+# Called directly rather than through npx: npm enforces devEngines.runtime of the mounted
+# package.json, which this image's Node.js does not satisfy.
+CMD ["node_modules/.bin/playwright", "test"]
 
 # --- preview: nginx serving the build with the same clean-URL rule as Cloudflare -------------
 # Kept as the last stage, so a build without --target produces this image.

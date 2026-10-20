@@ -138,4 +138,21 @@ describe('component conventions', () => {
     // Bump both together, or the browser build differs from the one the baselines came from.
     expect(tag).toBe(packageJson.devDependencies?.['@playwright/test']);
   });
+
+  it('pins one Node.js major for development without constraining consumers', () => {
+    const packageJson = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8')) as {
+      engines?: unknown;
+      devEngines?: { runtime?: { name?: string; version?: string } };
+    };
+    const nvmrc = readFileSync(resolve(root, '.nvmrc'), 'utf8').trim();
+    const dockerfile = readFileSync(resolve(root, 'Dockerfile'), 'utf8');
+    const runtime = packageJson.devEngines?.runtime;
+
+    // engines would be published; the components do not depend on the Node.js version.
+    expect(packageJson.engines).toBeUndefined();
+    expect(runtime?.name).toBe('node');
+    expect(runtime?.version).toBe(`>=${nvmrc} <${String(Number(nvmrc) + 1)}`);
+    // Workflows read .nvmrc, so these three cover every place the major is written.
+    expect(/^ARG NODE_VERSION=(\S+)$/m.exec(dockerfile)?.[1]).toBe(nvmrc);
+  });
 });
