@@ -1,5 +1,11 @@
 # su3-ui-component-catalog
 
+## 0.1.1
+
+### Patch Changes
+
+- dcdf74b: Beta Release without products (only sample)
+
 ## 0.1.0
 
 ### Minor Changes
