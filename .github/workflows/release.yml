@@ -1,0 +1,71 @@
+# Changesets release (docs/project_plan.md sections 8 and 9). On every push to main:
+#   - pending changesets: open or update the "Version Packages" pull request;
+#   - none left (that pull request was merged): tag vX.Y.Z, create the GitHub Release and publish
+#     to npm with Trusted Publishing (OIDC, provenance), then open the main -> develop back-merge
+#     pull request.
+#
+# Publishing runs only in the repository named by the repository variable NPM_PUBLISH_REPOSITORY
+# (owner/repo), so template copies and forks never publish the package. The npm trusted publisher
+# must name this workflow file. Optional secret RELEASE_TOKEN (GitHub App token or fine-grained
+# PAT with contents and pull-requests write): pull requests opened with GITHUB_TOKEN do not trigger
+# CI, so set it if those checks are required.
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Version or publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write # version commits, tags and GitHub Releases
+      pull-requests: write # Version Packages and back-merge pull requests
+      id-token: write # npm Trusted Publishing
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # changesets/action pushes through the GitHub API with its own token.
+          persist-credentials: false
+
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          cache: 'false'
+
+      - name: Create the Version Packages pull request or publish
+        id: changesets
+        uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
+        with:
+          # Empty outside the publishing repository, which disables publishing.
+          publish-script: ${{ github.repository == vars.NPM_PUBLISH_REPOSITORY && 'pnpm run release' || '' }}
+          commit-message: 'chore: version packages'
+          pr-title: 'chore: version packages'
+          github-token: ${{ secrets.RELEASE_TOKEN || github.token }}
+
+      - name: Open the back-merge pull request to develop
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+          GH_REPO: ${{ github.repository }}
+          PUBLISHED: ${{ steps.changesets.outputs.published-packages }}
+        run: |
+          version="$(jq -r '.[0].version' <<<"$PUBLISHED")"
+          open="$(gh pr list --base develop --head main --state open --json number --jq 'length')"
+          if [[ "$open" != "0" ]]; then
+            echo "A main -> develop pull request is already open."
+            exit 0
+          fi
+          gh pr create --base develop --head main \
+            --title "chore: merge main back into develop after v$version" \
+            --body "Brings the version bump and CHANGELOG of v$version back to develop (docs/project_plan.md section 8). Merge with a merge commit."

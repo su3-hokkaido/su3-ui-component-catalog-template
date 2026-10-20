@@ -38,22 +38,58 @@ Summary of `docs/project_plan.md` §3, §4, §10 and §13:
   `--default`. Titles must be unique across `shared` and each product.
 - Styling: Tailwind utilities only, always with the `uic:` prefix; no per-component CSS files; no
   arbitrary values (`bg-[#123456]`); colors, spacing, radius and fonts come from the `@theme`
-  tokens in `src/styles/index.css`.
+  tokens in `src/styles/theme.css`.
 - Components must not rely on preflight (it is not shipped); set what you need explicitly, e.g.
   `uic:border uic:border-solid`.
 - Merge classes with `cn()` (`src/lib/cn.ts`) and accept a `className` prop; define variants with
   cva.
 - Dependency direction: products may import `shared`; `shared` never imports products; products
   never import each other.
-- No a11y addon violations. Optional per-story VRT settings go in `parameters.vrt`.
+- No a11y addon violations. Optional per-story VRT settings go in `parameters.vrt`:
+  `{ disable?: boolean; viewports?: ('desktop' | 'mobile')[] }` (validated by `tests/vrt/stories.ts`).
+- After a visual change or a new story, run `make vrt-update` and review the changed baselines in
+  `tests/vrt/__screenshots__/`; delete the baselines of removed or renamed stories, and of stories or viewports you exclude
+  with `parameters.vrt` (the orphan check cannot see those).
+
+## Component checklist
+
+A new or changed component is done when:
+
+- [ ] `Component.tsx`, `Component.stories.tsx`, `Component.test.tsx` and `index.ts` exist in
+      `components/{category}/{Component}/` (`/new-component` scaffolds them).
+- [ ] The component uses `uic:` utilities with tokens, `cn()` with a `className` prop, and cva for
+      variants; nothing depends on preflight.
+- [ ] The story file has title `{Category}/{Component}` and a `Default` story; the a11y addon
+      reports no violations.
+- [ ] Tests cover the variants and behavior with role-based queries.
+- [ ] It is re-exported from the scope's `index.ts`, and imports follow the dependency direction
+      (`shared` never imports products; products never import each other).
+- [ ] Code, comments and docs are in English, with no emojis.
+- [ ] `make vrt-update` ran and the changed baselines were reviewed.
+- [ ] A changeset exists if the published package changes (`make changeset`).
+- [ ] `make ci` passes.
+
+## Documentation
+
+- `README.md` (English) is the user-facing guide; `README_JA.md` mirrors it with the same headings,
+  code blocks and links. Update both when commands, setup, the package API or the release flow
+  change, then run the `readme-sync` agent.
+- `docs/project_plan.md` is the specification: record decisions there (with a §17 entry), and
+  per-task reasoning in `docs/{yyyy-mm-dd}_{NN}_{overview}/design.md`.
 
 ## Libraries and tooling
 
 - To learn a library/framework API, **use the Context7 MCP** for current docs rather than memory —
-  especially Storybook, Tailwind CSS v4, Vitest, Playwright, tsup and Changesets, which move fast.
+  especially Storybook, Tailwind CSS v4, Vitest, Playwright, tsdown and Changesets, which move fast.
   For Cloudflare (Pages, `_redirects`, wrangler), use the Cloudflare documentation search.
 - Docker is the default environment. Run commands through `make` targets (`make help` lists them);
   `local-*` targets exist for running on the host.
+- GitHub Actions (`.github/workflows/`, `docs/project_plan.md` §8): CI runs `pnpm run ci` and the
+  Docker VRT on every PR. Pin any new action to a full commit SHA with a `# vX.Y.Z` comment (Dependabot
+  updates them), keep `permissions` minimal, and keep Cloudflare specifics in `_deploy.yml` and
+  `deploy/cloudflare/`.
+- The Node.js major is in `.nvmrc`, `devEngines.runtime` and the Dockerfile `NODE_VERSION`; never
+  add `engines` (it would be published). `src/conventions.test.ts` checks this.
 - Hidden folders (e.g. `.tmp`) may be missed by directory listings; find them with `Glob`
   (`**/.tmp/**`) or `Bash` (`find`).
 
@@ -114,7 +150,7 @@ cut from `develop`, and merged back into `develop` via PR. Per-task docs live un
 ## Pull requests
 
 When asked to prepare a PR (the user runs `gh` / creates it), the base branch is `develop` (or
-`main` for a release PR), and the description uses:
+`main` for a release PR), and the description uses (as in `.github/PULL_REQUEST_TEMPLATE.md`):
 
 - **Title**: brief summary.
 - **Key Changes**: what changed and anything reviewers should watch.

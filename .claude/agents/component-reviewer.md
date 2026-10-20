@@ -15,7 +15,7 @@ findings, do not edit files. The specification is `docs/project_plan.md` (ยง3, ย
 - Every Tailwind utility uses the `uic:` prefix (including inside cva definitions and `cn()`
   calls). An unprefixed utility silently produces no style.
 - No arbitrary values (`bg-[#123456]`, `p-[13px]`), raw hex/rgb/oklch, or px/rem literals in
-  `className` or `style`. Values must map to `@theme` tokens in `src/styles/index.css`. A missing
+  `className` or `style`. Values must map to `@theme` tokens in `src/styles/theme.css`. A missing
   token should be added there, not worked around.
 - No inline `style={{...}}` for visual styling, and no per-component CSS files.
 - No reliance on preflight: e.g. `uic:border` without an explicit border style.
@@ -38,7 +38,11 @@ findings, do not edit files. The specification is `docs/project_plan.md` (ยง3, ย
 - Story `title` is `{Category}/{Component}` with no productId, and is not already used in
   `src/shared` (search for duplicate titles).
 - A `Default` story is exported (clean URLs point at `--default`).
-- `parameters.vrt`, if present, uses only the documented keys (`disable`, `viewports`).
+- `parameters.vrt`, if present, uses only the documented keys (`disable`, `viewports` with
+  `desktop` / `mobile`).
+- A new or visually changed story comes with added or updated baselines under
+  `tests/vrt/__screenshots__/{desktop,mobile}/{shared|productId}/`, and a removed or renamed story
+  removes its old baselines.
 - Tests use Vitest + React Testing Library, query by role/label rather than class names, and cover
   each variant's behavior that matters (not just "renders").
 
@@ -57,7 +61,7 @@ findings, do not edit files. The specification is `docs/project_plan.md` (ยง3, ย
 ## Method
 
 Use `git diff` (and `git status` for untracked files) to scope the review to what changed. Read the
-touched files in full, plus the scope's `index.ts` and `src/styles/index.css` for token names.
+touched files in full, plus the scope's `index.ts` and `src/styles/theme.css` for token names.
 
 ## Output
 

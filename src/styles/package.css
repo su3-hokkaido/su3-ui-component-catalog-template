@@ -1,0 +1,14 @@
+/*
+ * Input for the distributed `styles.css` (`pnpm run build`), for consumers without Tailwind
+ * (docs/project_plan.md section 10). Same imports as index.css, but classes are taken only from the
+ * built JavaScript in dist, so stories and tests add nothing to the shipped CSS. Run it after
+ * tsdown has written dist.
+ */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme) prefix(uic);
+@import 'tailwindcss/utilities.css' layer(utilities) prefix(uic) source(none);
+@import './theme.css';
+
+/* Explicit paths keep dist/storybook out of the scan. */
+@source '../../dist/*.mjs';
+@source '../../dist/products/*.mjs';

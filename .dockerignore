@@ -1,0 +1,22 @@
+# Dependencies are installed inside the image or the node_modules volume.
+node_modules
+
+# Build and test outputs
+coverage
+dist
+storybook-static
+.wrangler
+test-results
+playwright-report
+blob-report
+
+# Never send real environment files to the build context; samples are fine.
+.env
+.env.*
+!.env.*.sample
+
+# Repository and tooling metadata
+.git
+.claude
+.DS_Store
+*.log

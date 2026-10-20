@@ -1,0 +1,14 @@
+/*
+ * Tailwind CSS entry for Storybook. The distributed `styles.css` is built from package.css with the
+ * same imports and tokens.
+ *
+ * - Only Tailwind's theme and utilities are imported. Preflight is intentionally omitted so the
+ *   library never resets the consumer's page (docs/project_plan.md section 10). Components must
+ *   not rely on preflight defaults.
+ * - The prefix must match CLASS_PREFIX in src/lib/prefix.ts (enforced by src/styles/prefix.test.ts).
+ * - Classes are detected automatically, so stories can use utilities too.
+ */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme) prefix(uic);
+@import 'tailwindcss/utilities.css' layer(utilities) prefix(uic);
+@import './theme.css';
