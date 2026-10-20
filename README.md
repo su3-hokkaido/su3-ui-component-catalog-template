@@ -159,7 +159,7 @@ the full specification and the reasoning behind each decision.
 
 ### Renaming the package and scope
 
-Replace `su3-ui-component-catalog-template` (for example with `@acme/ui`) in:
+Replace `su3-ui-component-catalog` (for example with `@acme/ui`) in:
 
 - `package.json`: `name` and `repository` (npm checks that provenance comes from the repository
   named there); also `description`, and `version` if you restart numbering.
@@ -168,6 +168,7 @@ Replace `su3-ui-component-catalog-template` (for example with `@acme/ui`) in:
   `.changeset/initial-release.md`).
 - `.env.docker.sample`: the example `AWS_SECRET_ID`.
 - `LICENSE`: the copyright holder. `.github/CODEOWNERS`: the owners.
+- `portal/index.html`: the portal's title, heading and author link.
 - GitHub repository variables: `NPM_PUBLISH_REPOSITORY` (your `owner/repo`) and
   `CLOUDFLARE_PROJECT_NAME` (see below).
 - The Tailwind prefix, if you want your own (next section).

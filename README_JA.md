@@ -89,7 +89,7 @@ make vrt                     # visual regression test in the Playwright image
 
 `productId` は `src/products/` の下のディレクトリです（小文字のケバブケース、例: `acme-web`）。
 プロダクトごとに、`src/shared` とそのプロダクトを含む Storybook が `dist/storybook/{productId}/` に
-ビルドされ、パッケージのサブパス（`su3-ui-component-catalog-template/{productId}`）も用意されます。
+ビルドされ、パッケージのサブパス（`su3-ui-component-catalog/{productId}`）も用意されます。
 `/` のポータルがすべてのプロダクトとそのコンポーネントを一覧します。
 
 依存の向き（ESLint で強制）: プロダクトは `src/shared` から import できます。`src/shared` は
@@ -158,7 +158,7 @@ export const Animated: Story = {
 
 ### パッケージ名とスコープの変更
 
-`su3-ui-component-catalog-template`（例: `@acme/ui` に変更）を次の場所で置き換えます:
+`su3-ui-component-catalog`（例: `@acme/ui` に変更）を次の場所で置き換えます:
 
 - `package.json`: `name` と `repository`（npm は provenance がそこに書かれたリポジトリから来たかを
   検証します）。あわせて `description`、番号を振り直すなら `version`。
@@ -167,6 +167,7 @@ export const Animated: Story = {
   `.changeset/initial-release.md`）。
 - `.env.docker.sample`: `AWS_SECRET_ID` の例。
 - `LICENSE`: 著作権者。`.github/CODEOWNERS`: オーナー。
+- `portal/index.html`: ポータルのタイトル、見出し、作者へのリンク。
 - GitHub のリポジトリ変数: `NPM_PUBLISH_REPOSITORY`（自分の `owner/repo`）と
   `CLOUDFLARE_PROJECT_NAME`（後述）。
 - 独自にしたい場合は Tailwind のプレフィックス（次の項目）。
@@ -404,4 +405,4 @@ Tailwind のプレフィックスはコンパイル単位で効くため、利�
 
 ## ライセンス
 
-[MIT](./LICENSE)
+[MIT License](./LICENSE)
