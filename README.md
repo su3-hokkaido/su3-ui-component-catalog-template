@@ -409,4 +409,4 @@ NAME=value`.
 
 ## License
 
-[MIT](./LICENSE)
+[MIT License](./LICENSE)
