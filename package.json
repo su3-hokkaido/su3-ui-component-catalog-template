@@ -3,6 +3,10 @@
   "version": "0.0.0",
   "description": "A Storybook-based UI component catalog template with per-product builds, Tailwind CSS v4 and npm publishing.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/su3-hokkaido/su3-ui-component-catalog-template.git"
+  },
   "type": "module",
   "packageManager": "pnpm@12.14.0",
   "devEngines": {

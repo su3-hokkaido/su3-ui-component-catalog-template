@@ -96,8 +96,8 @@ Node.js version although the components do not depend on it; pnpm fails on a mis
 ├── deploy/
 │   ├── cloudflare/             # _redirects, deploy.sh (wrangler pages deploy)
 │   ├── local/                  # nginx.conf for `make preview` (same rewrite rules as Cloudflare)
-│   ├── aws/                    # README only (how to switch to S3 + CloudFront)
-│   └── azure/                  # README only (how to switch to Static Web Apps)
+│   ├── aws/                    # README only (outline for S3 + CloudFront)
+│   └── azure/                  # README only (outline for Static Web Apps)
 ├── docs/
 │   ├── project_plan.md         # this document
 │   └── {yyyy-mm-dd}_{NN}_{overview}/   # per-task design.md + task.md
@@ -589,7 +589,8 @@ Starts with a link to `[日本語はこちら](./README_JA.md)`. Sections:
 
 - `CLAUDE.md`: coding conventions, directory conventions, the component checklist (component /
   story / test / export), and running `make ci` before handing work back.
-- `CONTRIBUTING.md` (optional).
+- `CONTRIBUTING.md` (optional). Not added (Phase 8): README's release flow, the PR template and
+  `CLAUDE.md` cover contribution.
 
 ---
 
@@ -702,3 +703,7 @@ and explain the reasoning in the PR description.
 - **2026-10-20 Phase 7**:
   - Secrets scripts implemented (§7): AWS CLI on the host and settings in `.env.docker` (owner
     decisions); conversion helper, overwrite guard and push confirmation recorded in §7.
+- **2026-10-20 Phase 8**:
+  - README / README_JA written (§12), with the owner setup from Phases 6 and 7; `CLAUDE.md` gains
+    the component checklist; `deploy/aws` and `deploy/azure` hold untested outlines; no
+    `CONTRIBUTING.md`.
