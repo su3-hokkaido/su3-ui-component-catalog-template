@@ -349,7 +349,9 @@ Versions follow SemVer and are managed with Changesets; tags are `vX.Y.Z`.
 1. A feature branch (`feature/...`, from `develop`) that changes the published package adds a
    changeset: `make changeset`, then pick major, minor or patch and describe the change.
 2. The pull request is merged into `develop` (deployed to the preview).
-3. A release pull request merges `develop` into `main` (deployed to production).
+3. Every push to `develop` makes `create-d2m-pr.yml` open or update the `develop` -> `main` release
+   pull request (git-pr-release, listing the merged pull requests). Merging it deploys to
+   production.
 4. On `main`, `release.yml` opens or updates the "chore: version packages" pull request with the
    version bump and `CHANGELOG.md`.
 5. Merging it tags `vX.Y.Z`, creates the GitHub Release and publishes to npm with Trusted
@@ -361,7 +363,7 @@ One-time setup by the repository owner:
 
 - GitHub: Settings > Actions > General > allow GitHub Actions to create and approve pull requests.
 - Pull requests opened with the default `GITHUB_TOKEN` do not trigger CI. If CI must run on the
-  version and back-merge pull requests, add a `RELEASE_TOKEN` secret (a GitHub App token or a
+  release, version and back-merge pull requests, add a `RELEASE_TOKEN` secret (a GitHub App token or a
   fine-grained token with contents and pull-requests write).
 - npm: a trusted publisher can only be added to a package that already exists, so publish the
   first version manually once (two-factor authentication required). From a clean checkout of

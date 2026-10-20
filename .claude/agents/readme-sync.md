@@ -16,7 +16,7 @@ by `docs/project_plan.md` §12.
 3. Compare section content. For each section, the Japanese version must cover the same points.
    Code blocks, commands, file paths, package names, URLs and table structure must be identical
    byte-for-byte; only prose and code comments that are explanatory text are translated.
-4. Check the language links: `README.md` starts with `[日本語はこちら](./README_JA.md)`, and
+4. Check the language links: `README.md` starts with `[Japanese is here](./README_JA.md)` (kept in English on purpose), and
    `README_JA.md` starts with `[English](./README.md)`.
 5. Update `README_JA.md` to fix any drift: add missing sections, remove sections that no longer
    exist in English, and update translations whose English source changed.
