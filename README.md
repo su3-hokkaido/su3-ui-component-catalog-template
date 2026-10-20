@@ -381,6 +381,18 @@ One-time setup by the repository owner:
   `owner/repo`. Publishing runs only in that repository, so forks and template copies never
   publish.
 
+  A manual publish creates no `vX.Y.Z` tag or GitHub Release: `release.yml` creates them only
+  for the versions it publishes. To add them for the first version, run this on the same checkout
+  of `main`:
+
+  ```sh
+  version="$(node -p 'require("./package.json").version')"
+  git tag "v$version"
+  git push origin "v$version"
+  gh release create "v$version" --title "v$version" \
+    --notes-file <(awk -v v="## $version" '$0==v{f=1;next} /^## /{f=0} f' CHANGELOG.md)
+  ```
+
 ## Make commands
 
 `make help` lists every target. Settings such as `PRODUCT_ID` are passed as `make <target>

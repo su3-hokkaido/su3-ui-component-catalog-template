@@ -376,6 +376,18 @@ Tailwind のプレフィックスはコンパイル単位で効くため、利�
   `owner/repo` を設定します。公開はそのリポジトリでだけ動くので、フォークやテンプレートから
   作ったリポジトリが公開することはありません。
 
+  手動で公開しても `vX.Y.Z` タグと GitHub Release は作られません。`release.yml` がタグと Release を
+  作るのは、自身が公開するバージョンの分だけです。最初のバージョンにも付けるなら、同じ `main` の
+  チェックアウトで次を実行します:
+
+  ```sh
+  version="$(node -p 'require("./package.json").version')"
+  git tag "v$version"
+  git push origin "v$version"
+  gh release create "v$version" --title "v$version" \
+    --notes-file <(awk -v v="## $version" '$0==v{f=1;next} /^## /{f=0} f' CHANGELOG.md)
+  ```
+
 ## Make コマンド
 
 `make help` ですべてのターゲットを一覧できます。`PRODUCT_ID` などの設定は
