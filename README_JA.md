@@ -278,15 +278,15 @@ Secrets に置きます。
 ## 公開パッケージのインストール
 
 ```sh
-pnpm add su3-ui-component-catalog-template
+pnpm add su3-ui-component-catalog
 ```
 
 peer dependencies: `react` と `react-dom` 19。`tailwindcss` 4.3 以上は、後述する 2 つ目の CSS
 パターンでだけ必要です。
 
 ```tsx
-import { Button } from 'su3-ui-component-catalog-template'; // shared components
-import { Toggle } from 'su3-ui-component-catalog-template/sample'; // the sample product
+import { Button } from 'su3-ui-component-catalog'; // shared components
+import { Toggle } from 'su3-ui-component-catalog/sample'; // the sample product
 
 export function Example() {
   return (
@@ -306,7 +306,7 @@ Next.js App Router のサーバーコンポーネントから直接 import で�
 アプリのエントリーやルートレイアウトなどで、スタイルシートを一度だけ import します:
 
 ```ts
-import 'su3-ui-component-catalog-template/styles.css';
+import 'su3-ui-component-catalog/styles.css';
 ```
 
 コンポーネントが使うクラス、デザイントークン、ダークテーマだけを含みます。リセット（preflight）
@@ -323,8 +323,8 @@ Tailwind のプレフィックスはコンパイル単位で効くため、利�
 @layer theme, utilities;
 @import 'tailwindcss/theme.css' layer(theme) prefix(uic);
 @import 'tailwindcss/utilities.css' layer(utilities) prefix(uic) source(none);
-@import 'su3-ui-component-catalog-template/theme.css';
-@source '../node_modules/su3-ui-component-catalog-template/dist';
+@import 'su3-ui-component-catalog/theme.css';
+@source '../node_modules/su3-ui-component-catalog/dist';
 ```
 
 `@source` のパスは、このファイルから `node_modules` への相対位置に合わせてください。ファイルは

@@ -1,4 +1,4 @@
-[日本語はこちら](./README_JA.md)
+[Japanese is here](./README_JA.md)
 
 # su3-ui-component-catalog-template
 
@@ -90,7 +90,7 @@ Ports and the default product are set in `.env.docker` (`DEV_PORT`, `PREVIEW_POR
 A `productId` is a directory under `src/products/` (lower-case kebab-case, for example
 `acme-web`). Each product gets its own Storybook containing `src/shared` plus that product, built
 into `dist/storybook/{productId}/`, and its own package sub-path
-(`su3-ui-component-catalog-template/{productId}`). The portal at `/` lists every product and its
+(`su3-ui-component-catalog/{productId}`). The portal at `/` lists every product and its
 components.
 
 Dependency direction (enforced by ESLint): products may import from `src/shared`; `src/shared`
@@ -282,15 +282,15 @@ reusable workflow, and translate the clean-URL rule. Outlines:
 ## Installing the published package
 
 ```sh
-pnpm add su3-ui-component-catalog-template
+pnpm add su3-ui-component-catalog
 ```
 
 Peer dependencies: `react` and `react-dom` 19. `tailwindcss` 4.3+ is needed only for the second
 CSS pattern below.
 
 ```tsx
-import { Button } from 'su3-ui-component-catalog-template'; // shared components
-import { Toggle } from 'su3-ui-component-catalog-template/sample'; // the sample product
+import { Button } from 'su3-ui-component-catalog'; // shared components
+import { Toggle } from 'su3-ui-component-catalog/sample'; // the sample product
 
 export function Example() {
   return (
@@ -310,7 +310,7 @@ The package ships ESM and CJS with type declarations, and its JavaScript starts 
 Import the stylesheet once, for example in the app's entry or root layout:
 
 ```ts
-import 'su3-ui-component-catalog-template/styles.css';
+import 'su3-ui-component-catalog/styles.css';
 ```
 
 It contains only the classes the components use, the design tokens and the dark theme. It has no
@@ -327,8 +327,8 @@ entry:
 @layer theme, utilities;
 @import 'tailwindcss/theme.css' layer(theme) prefix(uic);
 @import 'tailwindcss/utilities.css' layer(utilities) prefix(uic) source(none);
-@import 'su3-ui-component-catalog-template/theme.css';
-@source '../node_modules/su3-ui-component-catalog-template/dist';
+@import 'su3-ui-component-catalog/theme.css';
+@source '../node_modules/su3-ui-component-catalog/dist';
 ```
 
 Adjust the `@source` path to where the file sits relative to `node_modules`. Keep it a separate
