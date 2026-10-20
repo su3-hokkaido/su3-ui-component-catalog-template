@@ -1,6 +1,6 @@
 {
   "name": "su3-ui-component-catalog",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A Storybook-based UI component catalog template with per-product builds, Tailwind CSS v4 and npm publishing.",
   "license": "MIT",
   "repository": {
