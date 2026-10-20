@@ -33,7 +33,7 @@
 | Styling                | Tailwind CSS                                                                        | Latest major (v4, CSS-first configuration). See §10                                                                                                                                                                                                      |
 | Catalog                | Storybook                                                                           | Latest stable (Vite builder). Addons: `@storybook/addon-a11y`, `@storybook/addon-docs`, `@storybook/addon-themes` (dark-mode toolbar). Controls, actions, viewport and interactions are part of Storybook core since v9 and are not installed separately |
 | Package manager        | pnpm                                                                                | Pinned with the `packageManager` field. pnpm itself switches to that version on the host; the Dockerfile installs that exact version with npm, because Node.js 25+ no longer bundles Corepack                                                            |
-| Runtime                | Node.js                                                                             | **26** (owner decision; Active LTS from late October 2026), pinned in `.nvmrc` and `engines` (see note below)                                                                                                                                            |
+| Runtime                | Node.js                                                                             | **26** (owner decision; Active LTS from late October 2026), pinned in `.nvmrc` and `devEngines` (see note below)                                                                                                                                         |
 | Language               | TypeScript                                                                          | 6.0.x until typescript-eslint and Storybook's docgen support TypeScript 7 (the native port)                                                                                                                                                              |
 | Unit test              | Vitest + React Testing Library                                                      | `jsdom` environment, `@testing-library/jest-dom` matchers                                                                                                                                                                                                |
 | Lint / Format          | ESLint (flat config) + Prettier                                                     | ESLint 10. `eslint-config-prettier` to avoid conflicts. `eslint-plugin-jsx-a11y` is not used (it supports ESLint 9 at most); accessibility is covered by the a11y addon and role-based tests                                                             |
@@ -46,8 +46,11 @@
 
 Node.js note: as of 2026-10, Node.js 24 is the Active LTS and Node.js 26 is scheduled to be
 promoted to LTS in late October 2026. Pick the Active LTS major at implementation time, write it
-explicitly (e.g. `24`), and use the same major in `.nvmrc`, `engines`, the Dockerfile base image and
-`actions/setup-node`.
+explicitly (e.g. `24`), and use the same major in `.nvmrc`, `devEngines.runtime`, the Dockerfile base
+image and `actions/setup-node` (which reads `.nvmrc`). **Decision (Phase 6)**: the constraint is in
+`devEngines`, not `engines`, because `engines` is published and would warn every consumer on another
+Node.js version although the components do not depend on it; pnpm fails on a mismatch
+(`onFail: "error"`). `src/conventions.test.ts` checks that the places agree.
 
 ### Decisions
 
@@ -75,6 +78,7 @@ explicitly (e.g. `24`), and use the same major in `.nvmrc`, `engines`, the Docke
 .
 ├── .claude/                    # Claude Code agents, skills and settings
 ├── .github/
+│   ├── actions/setup/          # composite action: pnpm, Node.js from .nvmrc, pnpm install
 │   ├── workflows/
 │   │   ├── ci.yml              # format check, lint, typecheck, unit test, storybook build, package build
 │   │   ├── _deploy.yml         # reusable deploy workflow (Cloudflare specifics live here + deploy/cloudflare/)
@@ -82,14 +86,15 @@ explicitly (e.g. `24`), and use the same major in `.nvmrc`, `engines`, the Docke
 │   │   ├── deploy_prod.yml     # main -> Cloudflare (production)
 │   │   ├── vrt.yml             # Playwright visual regression test
 │   │   └── release.yml         # Changesets: release PR -> tag -> GitHub Release -> npm publish
+│   ├── dependabot.yml          # keeps the SHA-pinned actions current
 │   ├── PULL_REQUEST_TEMPLATE.md
 │   └── ISSUE_TEMPLATE/
-├── .changeset/
+├── .changeset/                 # config.json and pending changesets
 ├── .storybook/
 │   ├── main.ts                 # selects the stories glob from PRODUCT_ID
 │   └── preview.ts
 ├── deploy/
-│   ├── cloudflare/             # wrangler.jsonc, _redirects, deploy scripts
+│   ├── cloudflare/             # _redirects, deploy.sh (wrangler pages deploy)
 │   ├── local/                  # nginx.conf for `make preview` (same rewrite rules as Cloudflare)
 │   ├── aws/                    # README only (how to switch to S3 + CloudFront)
 │   └── azure/                  # README only (how to switch to Static Web Apps)
@@ -348,8 +353,22 @@ Therefore:
   switching to AWS/Azure touches as few files as possible.
 - Use GitHub Environments (`development`, `production`) so that production can carry protection
   rules.
-- Cache the pnpm store.
-- (Optional) Post the per-PR preview deploy URL as a PR comment.
+- Cache the pnpm store (not in the release job).
+- (Optional) Post the per-PR preview deploy URL as a PR comment. Not implemented: pull requests
+  from forks have no secrets, and the `develop` preview covers review.
+- Implementation notes (Phase 6; details and the owner's one-time setup in
+  `docs/2026-10-19_02_phase6-github-actions/design.md`):
+  - Every job uses `.github/actions/setup` (pnpm from `packageManager`, Node.js from `.nvmrc`,
+    `pnpm install --frozen-lockfile`). `ci.yml` runs `pnpm run ci`, the script behind `make ci`.
+  - `vrt.yml` builds Storybook on the runner and runs the compose `vrt` service exactly as
+    `make vrt` does; the runner user (uid 1001) matches the image's `pwuser`.
+  - The Pages project's production branch is `main`; `deploy/cloudflare/deploy.sh` runs
+    `wrangler pages deploy dist/storybook --branch <branch>`, so `develop` deploys to
+    `develop.<project>.pages.dev`. There is no `wrangler.jsonc`: Pages direct upload takes flags.
+  - Actions are pinned to commit SHAs (owner decision) and updated by Dependabot against
+    `develop`.
+  - Pull requests opened with `GITHUB_TOKEN` do not trigger workflows; an optional `RELEASE_TOKEN`
+    secret is used for the Version Packages and back-merge pull requests when set.
 
 ### Guards for template copies and forks
 
@@ -357,9 +376,13 @@ Repositories created with "Use this template" and forks inherit the workflows bu
 
 - Deploy jobs run only when the required configuration exists, e.g.
   `if: vars.CLOUDFLARE_PROJECT_NAME != ''`, and otherwise skip with a notice instead of failing.
+  `CLOUDFLARE_PROJECT_NAME` must be a repository variable, because a job's `if` is evaluated
+  before its environment applies.
 - The npm publish step runs only when `github.repository` matches the repository that owns the
   package name (configured as a repository variable), so a fork that has not renamed the package
-  can never attempt to publish it.
+  can never attempt to publish it. Implemented as the repository variable
+  `NPM_PUBLISH_REPOSITORY`; outside that repository `release.yml` still maintains the Version
+  Packages PR but passes no publish script.
 
 ---
 
@@ -389,13 +412,16 @@ Repositories created with "Use this template" and forks inherit the workflows bu
 - Registries:
   - The template itself: **npmjs (public)**, using npm Trusted Publishing (GitHub Actions OIDC) with
     provenance, so no long-lived npm token is stored.
-    - Before implementing, verify in the current npm documentation whether a trusted publisher can
-      be configured for a package that does not exist yet, and whether the publish command used by
-      the Changesets action (pnpm or npm CLI) supports OIDC at the pinned versions. If the first
-      publish must be done manually, README documents that one-time step (the owner runs it).
+    - Verified in Phase 6 (npm documentation, 2026-10): a trusted publisher can only be configured
+      for a package that already exists, so the **first publish is a one-time manual step by the
+      owner** (0.0.0 from a clean checkout of `main`), after which the trusted publisher names
+      `release.yml`. `changeset publish` runs `pnpm publish`, which exchanges the GitHub OIDC
+      token and attaches provenance itself. README documents the step (Phase 8).
   - Forks for internal use: README documents how to switch `publishConfig.registry` to
     **GitHub Packages (private)**.
-- Versioning: SemVer, managed by Changesets; tags are `v1.2.3`.
+- Versioning: SemVer, managed by Changesets; tags are `v1.2.3`. `.changeset/config.json` uses
+  `baseBranch: develop` (feature PRs target it) and `access: public`; `make changeset` adds a
+  changeset, and `pnpm run release` builds, checks and publishes the package.
 
 ---
 
@@ -650,3 +676,7 @@ and explain the reasoning in the PR description.
   - VRT details settled (§11): viewport names, shared stories captured once, baseline layout, the
     orphan-baseline check, and a runner image with only `@playwright/test` (judgment calls in the
     Phase 5 design.md).
+- **2026-10-19 Phase 6**:
+  - The Node.js constraint moved from `engines` to `devEngines` (§2; owner decision).
+  - Actions pinned to commit SHAs with Dependabot (owner decision); workflow details, the publish
+    guard variable and the first manual publish recorded in §8 and §9; no `wrangler.jsonc` (§3).

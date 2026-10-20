@@ -58,6 +58,12 @@ Summary of `docs/project_plan.md` §3, §4, §10 and §13:
   For Cloudflare (Pages, `_redirects`, wrangler), use the Cloudflare documentation search.
 - Docker is the default environment. Run commands through `make` targets (`make help` lists them);
   `local-*` targets exist for running on the host.
+- GitHub Actions (`.github/workflows/`, `docs/project_plan.md` §8): CI runs `pnpm run ci` and the
+  Docker VRT on every PR. Pin any new action to a full commit SHA with a `# vX.Y.Z` comment (Dependabot
+  updates them), keep `permissions` minimal, and keep Cloudflare specifics in `_deploy.yml` and
+  `deploy/cloudflare/`.
+- The Node.js major is in `.nvmrc`, `devEngines.runtime` and the Dockerfile `NODE_VERSION`; never
+  add `engines` (it would be published). `src/conventions.test.ts` checks this.
 - Hidden folders (e.g. `.tmp`) may be missed by directory listings; find them with `Glob`
   (`**/.tmp/**`) or `Bash` (`find`).
 

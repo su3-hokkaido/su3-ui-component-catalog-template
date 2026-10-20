@@ -101,12 +101,16 @@ vrt: ## Rebuild every Storybook and run the visual regression test in the Playwr
 vrt-update: ## Rebuild every Storybook and update the changed or missing VRT baselines
 	$(RUN) pnpm run build-storybook:all
 	mkdir -p test-results playwright-report
-	$(COMPOSE) --profile vrt run --rm --build vrt npx playwright test --update-snapshots=changed
+	$(COMPOSE) --profile vrt run --rm --build vrt node_modules/.bin/playwright test --update-snapshots=changed
 
 .PHONY: new-product
 new-product: ## Scaffold src/products/PRODUCT_ID and add its package export (PRODUCT_ID is required)
 	$(if $(PRODUCT_ID),,$(error PRODUCT_ID is required, e.g. make new-product PRODUCT_ID=acme-web))
 	$(RUN) pnpm run new-product '$(PRODUCT_ID)'
+
+.PHONY: changeset
+changeset: ## Add a changeset for a change to the published package (interactive)
+	$(RUN) pnpm run changeset
 
 .PHONY: clean
 clean: ## Remove the containers, the node_modules volume and the built images
@@ -154,3 +158,7 @@ local-ci: ## Run the CI checks on the host
 local-new-product: ## Scaffold src/products/PRODUCT_ID on the host (PRODUCT_ID is required)
 	$(if $(PRODUCT_ID),,$(error PRODUCT_ID is required, e.g. make local-new-product PRODUCT_ID=acme-web))
 	pnpm run new-product '$(PRODUCT_ID)'
+
+.PHONY: local-changeset
+local-changeset: ## Add a changeset on the host (interactive)
+	pnpm run changeset

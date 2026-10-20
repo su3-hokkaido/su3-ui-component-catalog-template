@@ -5,8 +5,12 @@
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@12.14.0",
-  "engines": {
-    "node": ">=26 <27"
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=26 <27",
+      "onFail": "error"
+    }
   },
   "sideEffects": [
     "**/*.css"
@@ -56,7 +60,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
-    "ci": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build && pnpm run check:package && pnpm run build-storybook:all"
+    "ci": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build && pnpm run check:package && pnpm run build-storybook:all",
+    "changeset": "changeset",
+    "release": "pnpm run build && pnpm run check:package && changeset publish"
   },
   "peerDependencies": {
     "react": "^19.0.0",
@@ -75,6 +81,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "0.18.5",
+    "@changesets/cli": "3.0.3",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.64.1",
     "@storybook/addon-a11y": "10.6.2",
